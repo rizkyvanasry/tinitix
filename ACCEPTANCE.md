@@ -12,7 +12,7 @@ Status layanan nyata dibedakan dari bukti lokal. Lulus tes lokal tidak menyelesa
 | B6 | Ditunda pemilik | Pilihan gateway dan akun merchant belum ditetapkan. |
 | B7 | Belum selesai | Prosedur awal di OPERATIONS.md; pencatatan kasus/refund terstruktur dan alur provider menunggu B6. |
 | B8 | Persiapan tersedia | Pemeriksaan antrean/transaksi dan runbook deploy/rollback/restore tersedia. Monitor online, drill restore cloud, dan kebijakan bisnis final belum tersedia. |
-| B9 | Implementasi tersedia | GitHub Actions menjalankan type-check, tes PostgreSQL, build, dan browser database terisolasi. Eksekusi pertama di GitHub perlu dicatat setelah push. |
+| B9 | Lulus CI | GitHub Actions menjalankan type-check, tes PostgreSQL, build, dan browser database terisolasi. [Run pertama berhasil](https://github.com/rizkyvanasry/tinitix/actions/runs/37515413882). |
 | B10 | Lulus lokal | Search server, pagination 50 baris, ekspor streaming semua hasil. Tes 1.205 order termasuk timestamp mikrodetik, tidak ada duplikasi/hilang dan organisasi lain tidak terlihat. |
 | B11 | Belum dapat dimulai | Menunggu gateway, operasional, rekonsiliasi, serta simulasi petugas. |
 
@@ -28,3 +28,5 @@ Status layanan nyata dibedakan dari bukti lokal. Lulus tes lokal tidak menyelesa
 ## Catatan bukti staging yang perlu diisi
 
 Catat URL/commit deployment, waktu WIB, ID event/order, hasil yang diharapkan/aktual, dan referensi bukti tersensor. Jangan simpan password, QR, token akses, atau koneksi database di dokumen ini. Untuk uji email, penerimaan di inbox penguji harus dikonfirmasi secara terpisah dari respons provider. Untuk worker, rekam hasil dari perangkat lain saat laptop penguji mati.
+
+Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audit pada lockfile menghasilkan nol temuan. CI dan worker menggunakan Node.js 24 sesuai engine dependency. Validasi patch dilakukan pada CI cloud karena disk lokal hampir penuh.
