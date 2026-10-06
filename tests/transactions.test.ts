@@ -2,7 +2,8 @@ import {runMaintenance} from '../lib/maintenance';
 import {describe,it,before,after,beforeEach} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {PGlite} from '@electric-sql/pglite';
+import {createTestDatabase} from './database';
+import {adminOrderPage,adminOrderExportBatch,csvCell} from '../lib/admin-orders';
 import {setTestDatabase,type Db} from '../lib/db';
 import {seedEvents} from '../lib/seed';
 import {saveEvent,checkIn,assignStaff} from '../lib/admin';
@@ -21,7 +22,7 @@ process.env.PAYMENT_PROVIDER='simulation';
 process.env.APP_URL='https://preview.example.test';
 delete process.env.VERCEL_ENV;
 delete process.env.RESEND_API_KEY;
-const pg=new PGlite();
+const pg=await createTestDatabase();
 const db:Db={query:async(sql,values)=>(await pg.query(sql,values)) as any};
 setTestDatabase({...db,transaction:fn=>pg.transaction(tx=>fn({query:async(sql,values)=>(await tx.query(sql,values)) as any}))});
 const admin:User={id:'admin-test',name:'Admin',email:'admin@example.test',verified:true,role:'admin',organizationId:'tinitix'};
@@ -75,4 +76,37 @@ it('maintenance releases expired reservations without web traffic and preserves 
  assert.deepEqual((await db.query('SELECT token_hash FROM auth_tokens')).rows.map(r=>r.token_hash),['live']);
  await runMaintenance();
  assert.equal((await db.query('SELECT state FROM reservations WHERE order_id=$1',[order.id])).rows[0].state,'released');
+});
+
+it('search and CSV batches include over 500 orders and stay scoped to the organization',async()=>{
+ await db.query(`INSERT INTO orders(id,event_id,buyer_name,buyer_email,status,total,people,expires_at,idempotency_key,fingerprint,created_at)
+ SELECT 'bulk-'||lpad(n::text,4,'0'),$1,'Buyer '||n,'buyer'||n||'@example.test','pending',100,1,now()+interval '1 hour','bulk-key-'||n,'fixture',date_trunc('second',now())+n*interval '1 microsecond' FROM generate_series(1,1205) n`,[event.id]);
+ const first=await adminOrderPage(admin,'',1),last=await adminOrderPage(admin,'',25);
+ assert.equal(first.total,1205);assert.equal(first.orders.length,50);assert.equal(last.orders.length,5);
+ const found=await adminOrderPage(admin,'BUYER1@EXAMPLE.TEST',1);
+ assert.equal(found.total,1);assert.equal(found.orders[0].id,'bulk-0001');
+ assert.equal((await adminOrderPage(admin,'%',1)).total,0);
+ assert.equal((await adminOrderPage({...admin,organizationId:'other'},'',1)).total,0);
+ const ids:string[]=[];let cursor:{createdAt:string;id:string}|undefined;
+ for(;;){const rows=await adminOrderExportBatch(admin,'',cursor);ids.push(...rows.map(o=>o.id));if(rows.length<500)break;const last=rows[rows.length-1];cursor={createdAt:last.cursor_created_at,id:last.id};}
+ assert.equal(ids.length,1205);assert.equal(new Set(ids).size,1205);assert.ok(ids.includes('bulk-0001'));
+ assert.equal((await adminOrderExportBatch(admin,'buyer1@example.test')).length,1);
+ assert.equal((await adminOrderExportBatch({...admin,organizationId:'other'},'')).length,0);
+ assert.equal(csvCell(' =HYPERLINK("bad")'),'"\' =HYPERLINK(""bad"")"');
+});
+
+it('checkout, duplicate settlement and expiry racing preserve one unit and one ticket',async()=>{
+ await db.query('UPDATE categories SET quota=1 WHERE id=$1',[event.categories[0].id]);
+ const order=await createOrder(purchase(),key()),payment=await createPayment(order.id,order.access);
+ await db.query("UPDATE orders SET expires_at=now()-interval '1 second' WHERE id=$1",[order.id]);
+ await db.query("UPDATE reservations SET expires_at=now()-interval '1 second' WHERE order_id=$1",[order.id]);
+ const payload={id:key(),orderId:order.id,reference:payment.reference,merchant:'tinitix-simulation' as const,amount:event.categories[0].price,currency:'IDR' as const,status:'paid' as const};
+ const outcomes=await Promise.allSettled([settlePayment(payload),settlePayment(payload),expireOrders(),createOrder(purchase(),key())]);
+ for(const outcome of outcomes.slice(0,3))assert.equal(outcome.status,'fulfilled');
+ const view=await getOrder(order.id,order.access);
+ assert.ok(['paid','payment_review'].includes(view.status));
+ assert.equal(view.tickets.length,view.status==='paid'?1:0);
+ const stock=(await db.query("SELECT COALESCE(SUM(units),0)::int AS n FROM reservations WHERE state='converted' OR (state='active' AND expires_at>now())")).rows[0].n;
+ assert.equal(stock,1);
+ assert.equal((await db.query('SELECT COUNT(*)::int AS n FROM payment_events WHERE id=$1',[payload.id])).rows[0].n,1);
 });

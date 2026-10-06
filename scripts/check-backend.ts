@@ -25,7 +25,7 @@ if(process.env.DATABASE_URL&&!checks.some(c=>c.name==='DATABASE_URL'&&c.level===
   else{
    console.log('[OK] Migrasi: seluruh migrasi tercatat.');
    const admins=await pool.query("SELECT EXISTS(SELECT 1 FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.role='admin' AND u.verified=true) AS ready");
-   if(!admins.rows[0].ready){console.log('[WARN] Admin: belum ada admin terverifikasi. Jalankan npm run admin:create.');}
+   if(!admins.rows[0].ready){failed=true;console.log('[ERROR] Admin: belum ada admin terverifikasi. Jalankan npm run admin:create.');}
    else console.log('[OK] Admin: akun admin tersedia.');
   }
  }catch{

@@ -5,6 +5,7 @@ import {currentUser,requireRole,login,register,requestAuthEmail,confirmAuth} fro
 import {listEvents,getEvent,loadEvent} from '@/lib/catalog';
 import {createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment} from '@/lib/orders';
 import {adminOverview,saveEvent,staffEvents,checkIn,assignStaff,cancelTicket} from '@/lib/admin';
+import {adminOrderPage,adminOrderExportBatch,csvCell} from '@/lib/admin-orders';
 import {database} from '@/lib/db';
 import {hasDatabase,simulationEnabled,isProduction,appUrl} from '@/lib/config';
 import {AppError,hash,rateLimit,sign,safeEqual} from '@/lib/security';
@@ -26,7 +27,7 @@ async function handle(req:NextRequest){
   return json(await runMaintenance());
  }
  if(method==='POST'&&route==='payments/webhook'){const raw=await req.text();if(raw.length>16000)throw new AppError(413,'Payload terlalu besar.');const payment=paymentAdapter().verifyWebhook(raw,req.headers.get('x-payment-signature')||'');const result=await settlePayment(payment);after(processMailJobs);return json(result);}
- if(method==='POST'){const origin=req.headers.get('origin');if(!origin||origin!==req.nextUrl.origin)throw new AppError(403,'Origin tidak valid.');}
+ if(method==='POST'){const origin=req.headers.get('origin');if(!origin||origin!==new URL(appUrl()).origin)throw new AppError(403,'Origin tidak valid.');}
  const sid=req.cookies.get('tinitix_session')?.value;
  const user=await currentUser(sid);
  if(method==='GET'&&route==='auth/me')return json({user});
@@ -35,13 +36,28 @@ async function handle(req:NextRequest){
   return json((await database().query('SELECT o.id,o.status,o.total,o.created_at,e.data->>\'name\' AS event_name FROM orders o JOIN events e ON e.id=o.event_id WHERE o.buyer_email=$1 ORDER BY o.created_at DESC',[user.email])).rows);
  }
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
+ if(method==='GET'&&route==='admin/orders'){
+  const admin=await requireRole(sid,['admin']);
+  const page=Number(req.nextUrl.searchParams.get('page')||'1');
+  return json(await adminOrderPage(admin,req.nextUrl.searchParams.get('q')||'',page));
+ }
  if(method==='GET'&&route==='admin/staff-events'){const staff=await requireRole(sid,['admin','staff']);return json(await staffEvents(staff));}
  if(method==='GET'&&route==='admin/outbox'){await requireRole(sid,['admin']);return json(await previewOutbox());}
  if(method==='GET'&&route==='admin/orders/export'){
-  const admin=await requireRole(sid,['admin']);const {orders}=await adminOverview(admin);
-  const cell=(v:unknown)=>'"'+String(v??'').replace(/^[=+@-]/,"'").replace(/"/g,'""')+'"';
-  const csv=['id,event,buyer,email,status,total_idr,people',...orders.map(o=>[o.id,o.event_id,o.buyer_name,o.buyer_email,o.status,o.total,o.people].map(cell).join(','))].join('\r\n');
-  return new NextResponse('\uFEFF'+csv,{headers:{'Content-Type':'text/csv;charset=utf-8','Content-Disposition':'attachment; filename="tinitix-orders.csv"','Cache-Control':'no-store'}});
+  const admin=await requireRole(sid,['admin']),query=req.nextUrl.searchParams.get('q')||'';
+  const encoder=new TextEncoder();let cursor:{createdAt:string;id:string}|undefined,complete=false;
+  const stream=new ReadableStream<Uint8Array>({async pull(controller){
+   try{
+    if(complete){controller.close();return;}
+    const rows=await adminOrderExportBatch(admin,query,cursor);
+    const header=cursor?'':'\uFEFFid,event,buyer,email,status,total_idr,people\r\n';
+    const csv=rows.map(o=>[o.id,o.event_id,o.buyer_name,o.buyer_email,o.status,o.total,o.people].map(csvCell).join(',')).join('\r\n');
+    controller.enqueue(encoder.encode(header+csv+(rows.length?'\r\n':'')));
+    if(rows.length<500)complete=true;
+    else{const last=rows[rows.length-1];cursor={createdAt:last.cursor_created_at,id:last.id};}
+   }catch(error){controller.error(error);}
+  }});
+  return new NextResponse(stream,{headers:{'Content-Type':'text/csv;charset=utf-8','Content-Disposition':'attachment; filename="tinitix-orders.csv"','Cache-Control':'no-store'}});
  }
  const match=route.match(/^orders\/([^/]+)(?:\/(payment|simulate|resend))?$/);
  if(method==='GET'&&match)return json(await getOrder(match[1],req.cookies.get('order_'+match[1])?.value,user));

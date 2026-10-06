@@ -70,7 +70,9 @@ npm test
 npm run build
 ```
 
-Tes backend menggunakan PostgreSQL embedded (PGlite) yang terisolasi, tidak memakai database aplikasi nyata. Tes mencakup stok, idempotensi, webhook simulasi, tiket, akses pesanan, autentikasi, dan konfigurasi.
+Tes backend memakai PGlite secara default. Jika `TEST_DATABASE_URL` diisi pada environment proses, suite yang sama memakai PostgreSQL nyata dengan schema acak terisolasi; tidak memakai `DATABASE_URL` aplikasi. Tes mencakup stok, scan bersamaan, idempotensi, webhook simulasi, tiket, autentikasi, dan ekspor 1.205 order.
+
+CI GitHub Actions menyediakan PostgreSQL 17 dan menjalankan type-check, tes, build, serta browser dengan database. Untuk menjalankan browser database lokal, isi `TEST_DATABASE_URL` ke server tes lalu jalankan `npm run test:browser:db`. Runner membuat dan membersihkan schema sendiri, menyiapkan admin uji, menjalankan server port 3100, serta mematikan email/upload eksternal. Browser Chromium harus terpasang. Alur ini menguji admin publish, checkout couple, pembayaran simulasi, link email antrean, dan check-in; penerimaan inbox nyata tetap perlu diuji di staging.
 
 Untuk tes browser, jalankan server development pada port 3000 di terminal terpisah:
 
@@ -100,3 +102,5 @@ Build yang lolos bukan berarti penjualan nyata aktif. Aktivasi produksi masih me
 Ikuti [panduan setup staging](STAGING.md) untuk Neon, Resend, Vercel Preview, penyimpanan poster, worker, dan daftar bukti uji penerimaan.
 
 Jalankan `npm run worker` pada proses Node terpisah untuk maintenance berulang tanpa kunjungan website. `npm run worker:once` menjalankan satu batch. Worker menunggu 30 detik setelah batch selesai, menangani penghentian SIGINT/SIGTERM, dan memakai konfigurasi database serta APP_SECRET yang sama dengan aplikasi. Vercel Cron bukan scheduler untuk Preview.
+
+Status per milestone dan bukti uji tersedia di [ACCEPTANCE.md](ACCEPTANCE.md). Konfigurasi worker mandiri, monitoring, rollback, dan drill restore ada di [OPERATIONS.md](OPERATIONS.md).

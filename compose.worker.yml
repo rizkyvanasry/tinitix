@@ -1,0 +1,14 @@
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    init: true
+    restart: unless-stopped
+    env_file: .env.worker.local
+    stop_grace_period: 180s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'

@@ -1,6 +1,6 @@
 # Setup staging tinitix
 
-Status: konfigurasi dan worker disiapkan; akun cloud, PostgreSQL nyata, pengiriman email, upload poster, dan URL staging belum diverifikasi.
+Status terbaru ada di [ACCEPTANCE.md](ACCEPTANCE.md). Project Vercel `tinitix-staging` dan Blob khusus Preview telah dibuat; database cloud dan pengiriman email masih menunggu setup. Workspace Vercel bernama `naskara-ai`; project website lain di workspace itu tidak diubah.
 
 ## 1. Siapkan layanan
 
@@ -39,7 +39,7 @@ npm run admin:create -- alamat-admin@domainmu.id "Admin Staging"
 npm run backend:check
 ```
 
-Ganti alamat admin sebelum menjalankan. Pemeriksaan pertama wajar gagal jika migrasi belum ada. Hentikan langkah berikutnya jika migrasi gagal. admin:create membuat akun verified langsung; jalankan sekali untuk email baru, lalu kosongkan ADMIN_PASSWORD. Pastikan pemeriksaan terakhir menyatakan admin tersedia, bukan hanya exit code 0: admin yang belum ada saat ini dilaporkan sebagai warning.
+Ganti alamat admin sebelum menjalankan. Pemeriksaan pertama wajar gagal jika migrasi belum ada. Hentikan langkah berikutnya jika migrasi gagal. admin:create membuat akun verified langsung; jalankan sekali untuk email baru, lalu kosongkan ADMIN_PASSWORD. Pastikan pemeriksaan terakhir menyatakan admin tersedia. Admin yang belum ada menggagalkan pemeriksaan.
 
 Seeder tidak diperlukan untuk milestone ini: buat event melalui admin agar alur operasional benar-benar teruji.
 
@@ -53,7 +53,7 @@ Tanpa konfigurasi Resend, worker tetap membersihkan reservasi tetapi email tidak
 
 ## 4. Deploy Preview terbatas
 
-Proyek ini belum memiliki repository Git. Untuk upload langsung dari folder lokal, setelah akun Vercel siap:
+Repository tersedia di https://github.com/rizkyvanasry/tinitix. Folder lokal sudah dihubungkan ke project `tinitix-staging`. Jika menyiapkan ulang di komputer lain:
 
 ```powershell
 npx vercel login
@@ -101,3 +101,7 @@ Semua baris berikut **belum diuji pada layanan nyata**. Catat waktu, deployment,
 | Persistensi | Restart aplikasi dan worker; event, order paid, dan check-in masih ada. |
 
 Tes otomatis PGlite tidak membuktikan konkurensi koneksi PostgreSQL nyata. Enam uji kritis di atas tetap harus diulang dengan staging sebenarnya. Milestone baru selesai setelah email diterima dan QR berhasil dipindai di URL staging, dengan worker online berjalan mandiri.
+
+Gunakan `APP_URL` yang persis cocok dengan origin alias staging yang dibuka penguji. Pemeriksaan origin POST dan tautan email memakai konfigurasi tersebut.
+
+Konfigurasi Docker worker dengan restart tersedia di `compose.worker.yml`; lihat [OPERATIONS.md](OPERATIONS.md). Konfigurasi ini harus dijalankan pada host online untuk memenuhi uji laptop mati.

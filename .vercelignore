@@ -1,0 +1,6 @@
+.env*
+.agents/
+.playwright/
+test-results/
+playwright-report/
+.git/
