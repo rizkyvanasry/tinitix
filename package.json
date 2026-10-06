@@ -1,0 +1,55 @@
+{
+  "name": "tinitix",
+  "version": "1.0.0",
+  "description": "Event discovery and ticketing platform for Vercel",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "admin:create": "tsx scripts/admin.ts",
+    "ask": "node index.js",
+    "backend:check": "tsx scripts/check-backend.ts",
+    "worker": "tsx scripts/worker.ts",
+    "worker:once": "tsx scripts/worker.ts --once"
+  },
+  "keywords": [
+    "openai",
+    "chatgpt",
+    "node",
+    "api"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@fontsource/barlow-condensed": "^5.2.0",
+    "@fontsource/ibm-plex-sans": "^5.2.0",
+    "@vercel/blob": "^2.0.0",
+    "@vercel/functions": "^3.0.0",
+    "@zxing/browser": "^0.2.1",
+    "dotenv": "^16.4.5",
+    "lucide-react": "^0.468.0",
+    "next": "^16.0.0",
+    "openai": "^4.52.7",
+    "pg": "^8.16.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

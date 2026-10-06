@@ -1,0 +1,7 @@
+'use client';
+import {useState,useEffect} from 'react';
+import Link from 'next/link';
+import {api} from '@/lib/client';
+import {rupiah,dateLabel} from '@/lib/format';
+import {EmptyState} from '@/components/shell';
+export default function Page(){const [orders,setOrders]=useState<any[]|null>(null),[error,setError]=useState(''),[message,setMessage]=useState('');useEffect(()=>{api<any[]>('account/orders').then(setOrders).catch(e=>setError(e.message));},[]);return <div className="container page-space"><div className="section-heading"><h1>Tiket & pesananmu.</h1><Link className="text-link" href="/access">Akses lewat email ↗</Link></div>{error?<><div className="error-message">{error}</div><Link className="button" href="/login">Masuk</Link><button className="text-button" onClick={async()=>{try{const me=await api('auth/me');if(!me.user)throw new Error('Masuk terlebih dahulu.');const r=await api('auth/email',{email:me.user.email,kind:'verify'});setMessage(r.message);}catch(e){setMessage((e as Error).message);}}}>Kirim ulang verifikasi email</button><p role="status">{message}</p></>:orders===null?<p>Memuat pesanan...</p>:orders.length?<div className="account-orders">{orders.map(o=><Link className="form-panel account-order" href={'/orders/'+o.id} key={o.id}><h2>{o.event_name}</h2><p>{dateLabel(o.created_at)} · {o.status}</p><strong>{rupiah(o.total)} ↗</strong></Link>)}</div>:<EmptyState title="Cerita pertamamu menunggu." description="Belum ada pesanan untuk email akun ini." href="/"/>}</div>;}

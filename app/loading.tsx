@@ -1,0 +1,1 @@
+export default function Loading(){return <div className="container page-space" aria-busy="true" aria-label="Memuat halaman"><div className="skeleton title-skeleton"/><div className="event-grid">{[1,2,3].map(n=><div className="skeleton card-skeleton" key={n}/>)}</div></div>;}
