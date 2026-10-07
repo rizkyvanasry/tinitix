@@ -1,5 +1,5 @@
 export type Category = { id:string; name:string; price:number; quota:number; people:number; starts:string; ends:string };
-export type Event = { id:string; organizationId:string; slug:string; name:string; kind:'Konser'|'Party'; city:string; venue:string; address:string; starts:string; ends:string; timezone:string; status:'draft'|'published'|'closed'|'cancelled'; capacity:number; maxPeople:number; poster:string; theme:string; eyebrow:string; lineup:string[]; description:string; terms:string; categories:Category[] };
+export type Event = { id:string; organizationId:string; slug:string; name:string; kind:'Konser'|'Party'; city:string; venue:string; address:string; starts:string; ends:string; timezone:string; status:'draft'|'published'|'closed'|'cancelled'; capacity:number; maxPeople:number; poster:string; banner?:string; theme:string; eyebrow:string; lineup:string[]; description:string; terms:string; categories:Category[] };
 export type PublicCategory = Category & { available:number; state:'available'|'soon'|'soldout'|'ended' };
 export type PublicEvent = Omit<Event,'categories'> & {categories:PublicCategory[]; startingPrice:number|null; startingPeople:number; saleState:string};
 export type User = {id:string;email:string;name:string;role:'admin'|'staff'|'buyer';organizationId:string;verified:boolean};
