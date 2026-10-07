@@ -1,6 +1,6 @@
 # Setup staging tinitix
 
-Status terbaru ada di [ACCEPTANCE.md](ACCEPTANCE.md). Project Vercel `tinitix-staging` dan Blob khusus Preview telah dibuat; database cloud dan pengiriman email masih menunggu setup. Workspace Vercel bernama `naskara-ai`; project website lain di workspace itu tidak diubah.
+Status terbaru ada di [ACCEPTANCE.md](ACCEPTANCE.md). Project Vercel `tinitix-staging` dan Blob khusus Preview telah dibuat. [Preview HTTPS](https://tinitix-staging-preview.vercel.app) aktif dan dilindungi login Vercel; database cloud dan pengiriman email masih menunggu setup. Workspace Vercel bernama `naskara-ai`; project website lain di workspace itu tidak diubah.
 
 ## 1. Siapkan layanan
 

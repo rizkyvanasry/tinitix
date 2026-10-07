@@ -9,7 +9,10 @@ export async function createTestDatabase(){
  const schema='test_'+randomUUID().replaceAll('-','');
  const admin=new Pool({connectionString:process.env.TEST_DATABASE_URL,max:1});
  await admin.query(`CREATE SCHEMA "${schema}"`);
- const pool=new Pool({connectionString:process.env.TEST_DATABASE_URL,max:10,options:`-c search_path=${schema} -c statement_timeout=20000`});
+ const isolatedUrl=new URL(process.env.TEST_DATABASE_URL);
+ // Connection-string options take precedence over Pool options in node-postgres.
+ isolatedUrl.searchParams.set('options',`-c search_path=${schema} -c statement_timeout=20000`);
+ const pool=new Pool({connectionString:isolatedUrl.toString(),max:10});
  return {
   query:(sql:string,values?:unknown[])=>pool.query(sql,values),
   exec:(sql:string)=>pool.query(sql),
