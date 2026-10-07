@@ -4,7 +4,7 @@ Status layanan nyata dibedakan dari bukti lokal. Lulus tes lokal tidak menyelesa
 
 | ID | Status | Bukti / sisa pekerjaan |
 | --- | --- | --- |
-| B1 | Berjalan | Project terpisah `tinitix-staging` memiliki [Preview HTTPS aktif](https://tinitix-staging-preview.vercel.app), target Preview terkonfirmasi dan API merespons. PostgreSQL cloud, migrasi cloud, dan admin pemilik masih menunggu setup. |
+| B1 | Lulus staging | [Preview HTTPS](https://tinitix-staging-preview.vercel.app) terhubung ke Neon PostgreSQL khusus staging. Migrasi `001_initial` dan `002_order_listing` diterapkan; pemeriksaan database, migrasi, dan admin terverifikasi berhasil. Login admin di deployment Preview merespons HTTP 200. |
 | B2 | Berjalan | Blob `tinitix-staging-posters` terhubung ke Preview. Upload lewat admin staging dan email inbox nyata belum diuji; domain email belum dipilih. |
 | B3 | Container terverifikasi, host belum | CI berhasil membangun image Node 24, menjalankan satu batch worker dengan PostgreSQL, dan menjalankan ops:check. Compose mengatur restart proses. Host online, uji crash/restart, dan uji laptop mati belum tersedia. |
 | B4 | Lulus lokal, staging belum | Browser dengan PostgreSQL terisolasi: admin login/publish, tamu checkout couple, simulasi paid, dua QR, tautan email antrean, dua check-in dan penolakan scan ulang. Belum mengirim email nyata atau menguji kamera fisik. |
@@ -34,8 +34,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview: `dpl_B1B9Uwz7gbh3bWvSoERtMoeVEVdp` (aplikasi commit `e686831`).
+- Deployment Preview aktif: `tinitix-staging-2i6vs4vbp-naskara-ai.vercel.app` (redeploy aplikasi commit `e686831` setelah koneksi Neon).
 - Perubahan setelah commit aplikasi tersebut hanya menambah pemeriksaan CI dan laporan bukti.
-- Akses dilindungi login Vercel. API katalog merespons HTTPS melalui akses penguji terautentikasi; enam event yang tampil masih data contoh karena database cloud belum terhubung.
-- APP_SECRET/CRON_SECRET disimpan sebagai secret pada Preview dengan izin pemilik. Blob khusus poster terhubung ke Preview. Belum ada data pembeli nyata.
+- Akses dilindungi login Vercel. `/api/auth/me` merespons normal dan login admin lewat API berhasil di Preview. Database masih belum berisi event atau data pembeli nyata.
+- APP_SECRET/CRON_SECRET disimpan sebagai secret pada Preview dengan izin pemilik. Blob khusus poster terhubung ke Preview. Password sementara admin hanya tersimpan dalam file lokal terabaikan Git `.vercel/admin-login.txt`.
 - Deployment pertama otomatis dibuat Vercel sebagai Production pada project staging baru; deployment Preview terpisah di atas yang dipakai untuk tahap simulasi. Project website `naskara-ai` tidak diubah.
