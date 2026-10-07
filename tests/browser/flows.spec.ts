@@ -1,12 +1,29 @@
 import {test,expect} from '@playwright/test';
+test('spotlight advances automatically and can be paused',async({page})=>{
+ await page.goto('/');
+ await expect(page.getByRole('button',{name:'Jeda poster otomatis'})).toBeVisible();
+ await page.clock.install();
+ const active=page.locator('.spotlight-slide[aria-hidden="false"]');
+ await expect(active).toContainText('Midnight Frequency');
+ await page.clock.runFor(5200);
+ await expect(active).toContainText('Soundscape Festival');
+ await page.getByRole('button',{name:'Jeda poster otomatis'}).click();
+ await page.getByRole('heading',{name:'Temukan event berikutnya.'}).click();
+ await page.clock.runFor(6000);
+ await expect(active).toContainText('Soundscape Festival');
+ await page.locator('.organizer-promo').click();
+ await expect(page.getByRole('heading',{name:'Dari tiket pertama sampai pintu venue.'})).toBeVisible();
+});
 test('catalog, search, responsive layout and detail',async({page},testInfo)=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/');await expect(page.getByRole('heading',{name:'Ada malam yang ditunggu.'})).toBeVisible();await expect(page.locator('.event-card')).toHaveCount(6);
+ await page.goto('/');await expect(page.getByRole('heading',{name:'Temukan event berikutnya.'})).toBeVisible();await expect(page.locator('.event-card')).toHaveCount(6);
  await expect(page.locator('.event-card img').first()).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'test-results/home-'+testInfo.project.name+'.png',fullPage:true});
  await page.getByLabel('Cari nama event atau lokasi').fill('HINDIA');await expect(page.locator('.event-card')).toHaveCount(1);
  await page.getByLabel('Cari nama event atau lokasi').fill('no such concert');await expect(page.getByText('Belum ketemu yang cocok?')).toBeVisible();await page.getByRole('button',{name:'Hapus filter',exact:true}).click();
+ await page.getByRole('button',{name:'Konser',exact:true}).click();await expect(page.locator('.event-card')).toHaveCount(3);
+ await page.getByRole('button',{name:'Party',exact:true}).click();await expect(page.getByRole('button',{name:'Konser',exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.getByRole('button',{name:'Party',exact:true})).toHaveAttribute('aria-pressed','true');await expect(page.locator('.event-card')).toHaveCount(6);
  await page.getByRole('button',{name:'Konser',exact:true}).click();await expect(page.locator('.event-card')).toHaveCount(3);
  await page.getByRole('button',{name:'Semua Event'}).click();await page.getByLabel('Filter kota').selectOption('Jakarta');await expect(page.locator('.event-card')).toHaveCount(2);
  await page.locator('.event-card').first().click();await expect(page.getByRole('heading',{name:'Tentang event'})).toBeVisible();await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

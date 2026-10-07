@@ -1,0 +1,55 @@
+/* Discovery redesign: existing cobalt brand, 8px surfaces and pill category controls. */
+.discover-masthead{background:#eef2ff;border-bottom:1px solid #dce4ff;padding:32px 0 0;margin-bottom:54px}
+.discover-masthead .hero-kicker{color:var(--blue-dark);font-size:12px;margin-bottom:9px}
+.discover-masthead h1{font-size:clamp(38px,4.5vw,62px);padding-bottom:8px}
+.discover-search{display:flex;align-items:center;gap:16px;background:white;border:1px solid var(--line);border-radius:8px;padding:10px 12px 10px 22px;transform:translateY(26px);box-shadow:0 8px 24px #17356b0a}
+.discover-search>svg{flex-shrink:0;color:var(--blue)}
+.discover-search input[type=search]{border:0;background:transparent;padding:8px 0;font-size:16px;border-radius:0}
+.discover-search input::placeholder{color:var(--muted);opacity:1}
+.discover-search .button{white-space:nowrap;flex-shrink:0}
+.discovery-highlights{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:24px;margin-bottom:48px;align-items:stretch}
+.event-spotlight{min-width:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:white}
+.spotlight-window{overflow:hidden}
+.spotlight-track{display:flex;transition:transform .65s cubic-bezier(.22,.61,.36,1)}
+.spotlight-slide{flex:0 0 100%;min-width:0}
+.spotlight-art{height:300px;background:#edf1f7;overflow:hidden}
+.spotlight-art img{height:100%;width:100%;object-fit:contain;background:#111827}
+.spotlight-caption{padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.spotlight-caption p{font-size:12px;color:var(--muted);margin-bottom:5px}
+.spotlight-caption h2{font-size:32px}
+.spotlight-caption>svg{color:var(--blue);flex-shrink:0}
+.spotlight-controls{display:flex;align-items:center;justify-content:space-between;padding:0 16px 6px 22px;min-height:44px}
+.spotlight-dots{display:flex;gap:7px;align-items:center}
+.spotlight-dots span{width:6px;height:6px;background:#bac3d4;border-radius:999px;transition:width .25s}
+.spotlight-dots .current{width:24px;background:var(--blue)}
+.spotlight-pause{display:flex;align-items:center;gap:6px;min-height:44px;min-width:66px;justify-content:center;font-size:11px;color:var(--muted)}
+.organizer-promo{display:flex;flex-direction:column;background:#eef2ff;border:1px solid #dce4ff;border-radius:8px;overflow:hidden}
+.organizer-promo-art{flex:1;padding:30px 28px;color:var(--blue-dark);position:relative;overflow:hidden}
+.organizer-promo-art .wordmark{display:block;font-size:32px;margin-bottom:26px}
+.organizer-promo-art h2{font-size:40px;margin-bottom:18px}
+.organizer-promo-art p{font-size:21px;line-height:1.5}
+.organizer-promo-link{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 28px;border-top:1px solid #cbd6fc;color:var(--blue-dark);font-size:14px;font-weight:600}
+.organizer-promo:hover .organizer-promo-link{background:#e1e8ff}
+.spotlight-empty{padding:40px;background:var(--soft);border-radius:8px}
+.discovery-refresh .event-section{padding-top:0;scroll-margin-top:24px}
+.discovery-refresh .section-heading{margin-bottom:14px}
+.discovery-refinements{background:transparent;border:0;border-radius:0;padding:0;gap:18px;justify-content:flex-start;margin-bottom:18px}
+.discovery-refinements .filter-select{border:1px solid var(--line);border-radius:6px;padding:0 12px;flex:0 1 auto}
+.category-hint{font-size:13px;color:var(--muted);margin-bottom:17px}
+.discovery-refresh .event-toolbar{margin-bottom:24px;gap:20px}
+.category-pills{gap:10px;flex-wrap:wrap;border:0!important;overflow:visible}
+.category-pills .tab{border:1px solid var(--line);border-radius:999px;padding:10px 20px;min-height:46px;color:var(--ink);background:white;gap:9px}
+.category-pills .tab.active{color:white;background:var(--blue);border-color:var(--blue)}
+.discovery-refresh .category-pills .tab span{background:transparent;color:inherit;font-size:inherit;padding:0;min-width:0;height:auto}
+.discovery-refresh .category-pills .tab>svg{display:block}
+.discovery-refresh .event-toolbar{border-bottom:0}
+.category-pills .tab:after{display:none}
+.discovery-refresh .event-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
+.discovery-refresh .poster-wrap{aspect-ratio:9/7}
+.discovery-refresh .poster-wrap img{width:100%;height:100%;object-fit:cover}
+.discovery-refresh .card-info h3{font-size:22px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;min-height:2.6em}
+.discovery-refresh .filter-bar.discovery-refinements{background:transparent;height:auto}
+@media(min-width:1400px){.discovery-refresh .event-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:900px){.discovery-highlights{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:18px}.organizer-promo-art{padding:24px 20px}.organizer-promo-art h2{font-size:33px}.organizer-promo-art p{font-size:18px}.organizer-promo-link{padding:18px 20px}.spotlight-art{height:260px}.discovery-refresh .event-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.discover-masthead{padding-top:24px;margin-bottom:44px}.discover-masthead h1{font-size:38px;max-width:300px}.discover-search{gap:9px;padding:8px 10px}.discover-search>svg{width:19px}.discover-search input[type=search]{font-size:13px}.discover-search .button{padding:9px 12px;font-size:12px;min-height:44px}.discover-search .button svg{display:none}.discovery-highlights{grid-template-columns:1fr;gap:20px;margin-bottom:34px}.spotlight-art{height:240px}.spotlight-caption{padding:16px}.spotlight-caption h2{font-size:29px}.organizer-promo-art{padding:23px}.organizer-promo-art .wordmark{margin-bottom:16px}.organizer-promo-art h2{font-size:34px;margin-bottom:12px}.organizer-promo-art p{font-size:17px}.organizer-promo-art p{max-width:250px}.organizer-promo-link{padding:16px 23px}.discovery-refresh .event-toolbar{align-items:flex-start;flex-direction:column;gap:14px}.category-pills .tab{padding:9px 16px}.discovery-refinements{display:flex;flex-wrap:wrap;gap:10px}.discovery-refinements .filter-select{flex:1;min-width:125px}.discovery-refresh .event-grid{grid-template-columns:1fr;gap:24px}}
+@media(prefers-reduced-motion:reduce){.spotlight-track,.spotlight-dots span{transition:none}}
