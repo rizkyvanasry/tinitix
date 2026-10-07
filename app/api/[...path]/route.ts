@@ -35,6 +35,15 @@ async function handle(req:NextRequest){
   if(!user?.verified)throw new AppError(403,'Verifikasi email untuk melihat pesanan.');
   return json((await database().query('SELECT o.id,o.status,o.total,o.created_at,e.data->>\'name\' AS event_name FROM orders o JOIN events e ON e.id=o.event_id WHERE o.buyer_email=$1 ORDER BY o.created_at DESC',[user.email])).rows);
  }
+ if(method==='GET'&&(route==='admin/reports'||route==='admin/reports/export')){
+  const admin=await requireRole(sid,['admin']),eventId=req.nextUrl.searchParams.get('eventId');
+  if(!eventId)throw new AppError(400,'Pilih event laporan.');
+  const {eventReport,reportWorkbook}=await import('@/lib/event-report');
+  const report=await eventReport(admin,eventId);
+  if(route==='admin/reports')return json({...report,sheets:report.sheets.map(sheet=>({...sheet,rows:sheet.rows.slice(0,50)}))});
+  const bytes=await reportWorkbook(report);
+  return new NextResponse(bytes,{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="export_report_'+report.event.id.replace(/[^a-zA-Z0-9_-]/g,'')+'.xlsx"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
+ }
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
  if(method==='GET'&&route==='admin/orders'){
   const admin=await requireRole(sid,['admin']);

@@ -1,5 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {ticketToken} from '../../lib/orders';
+import ExcelJS from 'exceljs';
 
 test('admin publishes, guest buys couple, email link opens tickets, and check-in rejects reuse',async({page,browser,baseURL})=>{
  expect((await page.request.post('/api/auth/login',{headers:{Origin:'https://untrusted.example'},data:{email:'admin@example.test',password:'Browser-test-password-123'}})).status()).toBe(403);
@@ -64,5 +65,17 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await page.getByLabel('Atau masukkan kode dari QR').fill(ticketToken(ticketIds[0]));
  await page.getByRole('button',{name:'Validasi tiket'}).click();
  await expect(page.getByRole('status')).toContainText('Tiket sudah digunakan.');
+ await page.goto('/admin');
+ await page.getByRole('button',{name:'Laporan Excel',exact:true}).click();
+ await expect(page.getByRole('button',{name:'Summary',exact:true})).toBeVisible();
+ const eventId=await page.getByLabel('Event laporan').inputValue();
+ expect((await outsider.request.get('/api/admin/reports/export?eventId='+eventId)).status()).toBe(403);
+ const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Unduh Excel',exact:true}).click()]);
+ const workbook=new ExcelJS.Workbook();await workbook.xlsx.readFile((await download.path())!);
+ expect(workbook.worksheets.map(s=>s.name)).toEqual(['Summary','Sold By Type','Sold By Date','Sold By Payment Channel','Orders','Tickets']);
+ expect(workbook.getWorksheet('Orders')!.getCell('A2').value).toBe(orderId);
+ expect(workbook.getWorksheet('Tickets')!.rowCount).toBe(3);
+ expect(workbook.getWorksheet('Tickets')!.getCell('AR2').value).toBe(1);
+ expect(workbook.getWorksheet('Tickets')!.getCell('AR3').value).toBe(1);
  await guest.close();await emailContext.close();await outsider.close();
 });

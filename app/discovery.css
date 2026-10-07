@@ -73,3 +73,5 @@
 @media(max-width:700px){.event-banner{aspect-ratio:1440/450}.event-detail-refresh .detail-page{margin-top:-16px}.event-detail-refresh .detail-grid{grid-template-columns:1fr;gap:22px}.event-portrait{grid-column:1;grid-row:1;width:100%;margin:auto}.event-detail-refresh .event-sidebar{grid-column:1;grid-row:2}.event-detail-refresh .detail-content{grid-column:1;grid-row:3}.event-detail-refresh .event-title{padding:22px 20px 12px}.event-detail-refresh .purchase-panel{padding:20px}.event-detail-refresh .detail-section{padding-block:24px}}
 
 @media(min-width:701px) and (max-width:1000px){.event-detail-refresh .detail-page{margin-top:-24px}}
+
+.report-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 16px}.report-panel .stat-grid{margin-block:24px}.report-panel .table-scroll{max-height:560px;margin-block:16px}.report-panel .table-scroll td{white-space:nowrap}.report-panel>.muted{font-size:12px;margin-block:12px}.report-panel .field{min-width:240px}
