@@ -29,7 +29,7 @@ Jika email gagal, periksa provider dan domain pengirim, lalu kirim ulang lewat a
 
 ## Deploy dan rollback
 
-Setiap PR menjalankan CI dengan PostgreSQL terisolasi. Sebelum deploy: semua checks hijau, backup tersedia, daftar migrasi ditinjau, environment Preview benar, dan APP_URL cocok dengan alias staging. Jalankan migrasi terlebih dahulu. Migrasi 002 hanya menambah index.
+Setiap PR menjalankan CI dengan PostgreSQL terisolasi. Sebelum deploy: semua checks hijau, backup tersedia, daftar migrasi ditinjau, environment Preview benar, dan APP_URL cocok dengan alias staging. Jalankan migrasi terlebih dahulu. Migrasi 002 dan 003 hanya menambah index. Migrasi 003 sudah diterapkan pada staging; versi aplikasi aktif dan bukti pemeriksaan dicatat di ACCEPTANCE.md.
 
 Deploy dengan `npx vercel --target preview`, lalu uji login, checkout simulasi, email, dan check-in. Catat commit serta URL deployment. Untuk rollback aplikasi, alihkan alias staging kembali ke URL deployment terakhir yang telah diuji melalui `vercel alias set`. Jangan menjalankan SQL downgrade atau mengembalikan backup di atas database aktif secara otomatis; pilih perbaikan maju jika skema telah berubah. Pertahankan APP_SECRET agar QR dan email lama tetap dapat digunakan.
 
