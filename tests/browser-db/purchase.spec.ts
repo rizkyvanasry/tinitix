@@ -28,11 +28,14 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const guest=await browser.newContext({baseURL}),buyer=await guest.newPage();
  await buyer.goto('/events/browser-couple-event/tickets');
  await buyer.getByRole('button',{name:'Tambah Presale 1 Couple Ticket',exact:true}).click();
+ await buyer.getByRole('button',{name:'Checkout',exact:true}).click();
  await buyer.getByLabel('Nama lengkap').fill('Couple Buyer');
  await buyer.getByLabel('Alamat email').fill('couple@example.test');
- await buyer.getByLabel('Konfirmasi email').fill('couple@example.test');
+ await buyer.getByLabel('Nomor telepon').fill('081234567890');
+ await buyer.getByLabel('Jenis kelamin').selectOption('female');
+ await buyer.getByRole('radio',{name:/QRIS/}).check();
  await buyer.getByRole('checkbox').check();
- await buyer.getByRole('button',{name:'Checkout',exact:true}).click();
+ await buyer.getByRole('button',{name:'Lanjut ke pembayaran',exact:true}).click();
  await expect(buyer).toHaveURL(/\/orders\/TIX/);
  const orderId=buyer.url().split('/').pop()!;
  await buyer.getByRole('button',{name:'Simulasikan pembayaran sukses'}).click();

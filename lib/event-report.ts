@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import template from './report-template.json';
+import {paymentChannelLabel} from './payment-channels';
 import {transaction} from './db';
 import {loadEvent} from './catalog';
 import {AppError} from './security';
@@ -25,7 +26,7 @@ export async function eventReport(user:User,eventId:string){
   const event=await loadEvent(db,eventId);
   if(event.organizationId!==user.organizationId)throw new AppError(404,'Event tidak ditemukan.');
   const now=new Date();
-  const orders=(await db.query(`SELECT o.id,o.buyer_name,o.buyer_email,o.phone,o.status,o.total,o.people,o.created_at,o.expires_at,
+  const orders=(await db.query(`SELECT o.id,o.buyer_name,o.buyer_email,o.phone,o.buyer_gender,o.requested_payment_channel,o.status,o.total,o.people,o.created_at,o.expires_at,
    p.created_at AS paid_at,p.data->>'merchant' AS merchant,p.data->>'channel' AS payment_channel
    FROM orders o LEFT JOIN LATERAL (SELECT data,created_at FROM payment_events WHERE order_id=o.id AND data->>'status'='paid' ORDER BY created_at,id LIMIT 1) p ON true
    WHERE o.event_id=$1 ORDER BY o.created_at,o.id`,[event.id])).rows;
@@ -53,7 +54,7 @@ export async function eventReport(user:User,eventId:string){
   sheets[2].rows=[...byDate].sort(([a],[b])=>a.localeCompare(b)).map(([day,v])=>[day,null,null,...v]);
   sheets[3].rows=[...byChannel].sort(([a],[b])=>a.localeCompare(b)).map(([name,v])=>[name,...v]);
   const common=(o:Record<string,any>)=>{const d=localTime(o.created_at,event.timezone);return {'Full Order ID':o.id,'Order ID':o.id,'Order Created':d.created,'Order Date':d.day,'Year':d.year,'Month':d.month,'Day':d.date,'Time':d.time,'Event ID':event.id,'Event Name':event.name,'Event Timezone':event.timezone,'GMT':d.offset,'Event Currency':'IDR','Contact Email':o.buyer_email,'Latest Contact Email':o.buyer_email,'First Name':o.buyer_name,'Order Timestamp':d.timestamp,'Payment Channel':channel(o)};};
-  sheets[4].rows=orders.map(o=>rowFrom('Orders',{...common(o),'Phone Number':o.phone,'Status':status(o),'Amount Discounted':0,'Total Of Order':o.total,'Total Fee':channel(o)==='Simulation'?0:null,'Net Payout Amount':o.status==='paid'&&channel(o)==='Simulation'?o.total:null,'Ticket Quantity':o.people,'Payment Timestamp':o.paid_at?localTime(o.paid_at,event.timezone).created:null,'Remark':channel(o)==='Simulation'?'Pembayaran simulasi':o.status==='payment_review'?'Pembayaran perlu ditinjau; tiket belum diterbitkan':null}));
+  sheets[4].rows=orders.map(o=>rowFrom('Orders',{...common(o),'Phone Number':o.phone,'Gender':o.buyer_gender==='male'?'Laki-laki':o.buyer_gender==='female'?'Perempuan':null,'Status':status(o),'Amount Discounted':0,'Total Of Order':o.total,'Total Fee':channel(o)==='Simulation'?0:null,'Net Payout Amount':o.status==='paid'&&channel(o)==='Simulation'?o.total:null,'Ticket Quantity':o.people,'Payment Timestamp':o.paid_at?localTime(o.paid_at,event.timezone).created:null,'Remark':channel(o)==='Simulation'?'Pembayaran simulasi'+(o.requested_payment_channel?' ? Pilihan: '+paymentChannelLabel(o.requested_payment_channel):''):o.status==='payment_review'?'Pembayaran perlu ditinjau; tiket belum diterbitkan':null}));
   sheets[5].rows=tickets.map(t=>{
    const o=byOrder.get(t.order_id)!,item=byItem.get(t.order_item_id)!;
    // Allocate package price across tickets in whole rupiah, preserving the exact order total.

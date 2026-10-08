@@ -28,13 +28,13 @@ setTestDatabase({...db,transaction:fn=>pg.transaction(tx=>fn({query:async(sql,va
 const admin:User={id:'admin-test',name:'Admin',email:'admin@example.test',verified:true,role:'admin',organizationId:'tinitix'};
 let event:Event;
 const key=()=>crypto.randomUUID();
-const purchase=(items?:{categoryId:string;quantity:number;price:number}[])=>({eventId:event.id,buyerName:'Dina Test',buyerEmail:'dina@example.test',confirmEmail:'dina@example.test',phone:'',accepted:true,items:items||[{categoryId:event.categories[0].id,quantity:1,price:event.categories[0].price}]});
+const purchase=(items?:{categoryId:string;quantity:number;price:number}[])=>({eventId:event.id,buyerName:'Dina Test',buyerEmail:'dina@example.test',phone:'081234567890',gender:'female',paymentChannel:'qris',accepted:true,items:items||[{categoryId:event.categories[0].id,quantity:1,price:event.categories[0].price}]});
 async function pay(order:{id:string;access:string},eventId=key()){
  const p=await createPayment(order.id,order.access);const o=await authorizeOrder(order.id,order.access);
  const payload={id:eventId,orderId:order.id,reference:p.reference,merchant:'tinitix-simulation' as const,amount:o.total,currency:'IDR' as const,status:'paid' as const};
  return {payload,result:await settlePayment(payload)};
 }
-before(async()=>{await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));});
+before(async()=>{await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/004_buyer_details.sql',import.meta.url),'utf8'));});
 after(async()=>{await pg.close();});
 beforeEach(async()=>{
  Object.assign(process.env,{NODE_ENV:'test'});delete process.env.VERCEL_ENV;delete process.env.RESEND_API_KEY;delete process.env.EMAIL_FROM;
@@ -55,7 +55,7 @@ describe('PRD transactional acceptance',()=>{
   assert.equal((await saveEvent({...reopened,venue:'Edited venue'},admin)).venue,'Edited venue');
  });
  it('AC01 only publishes future public events with current starting prices',async()=>{assert.equal((await listEvents()).length,1);await saveEvent({...event,status:'draft'},admin);assert.equal((await listEvents()).length,0);});
- it('AC02 guest checkout validates email confirmation and consent',async()=>{await assert.rejects(createOrder({...purchase(),confirmEmail:'other@example.test'},key()));await assert.rejects(createOrder({...purchase(),accepted:false},key()));const o=await createOrder(purchase(),key());assert.equal((await getOrder(o.id,o.access)).status,'pending');});
+ it('AC02 guest checkout validates email and consent',async()=>{await assert.rejects(createOrder({...purchase(),buyerEmail:'invalid-email'},key()));await assert.rejects(createOrder({...purchase(),accepted:false},key()));const o=await createOrder(purchase(),key());assert.equal((await getOrder(o.id,o.access)).status,'pending');});
  it('AC03 single + couple creates three distinct QR tickets with package prices',async()=>{const single=event.categories[1],couple=event.categories[2];const o=await createOrder(purchase([{categoryId:single.id,quantity:1,price:single.price},{categoryId:couple.id,quantity:1,price:couple.price}]),key());await pay(o);const view=await getOrder(o.id,o.access);assert.equal(view.people,3);assert.equal(view.total,single.price+couple.price);assert.equal(view.tickets.length,3);assert.equal(new Set(view.tickets.map(t=>t.qr)).size,3);});
  it('AC04 direct API refuses future, expired, sold-out, and stale prices',async()=>{const c=event.categories[0];await db.query("UPDATE categories SET starts_at=now()+interval '1 hour' WHERE id=$1",[c.id]);await assert.rejects(createOrder(purchase(),key()),/periode/);await db.query("UPDATE categories SET starts_at=now()-interval '1 day',ends_at=now()-interval '1 hour' WHERE id=$1",[c.id]);await assert.rejects(createOrder(purchase(),key()),/periode/);await db.query("UPDATE categories SET ends_at=now()+interval '1 day',quota=0 WHERE id=$1",[c.id]);await assert.rejects(createOrder(purchase(),key()),/Stok/);await db.query('UPDATE categories SET quota=10,price=price+1 WHERE id=$1',[c.id]);await assert.rejects(createOrder(purchase(),key()),/Harga/);});
  it('AC05 concurrent requests for the final unit have exactly one winner',async()=>{await db.query('UPDATE categories SET quota=1 WHERE id=$1',[event.categories[0].id]);const results=await Promise.allSettled([createOrder(purchase(),key()),createOrder(purchase(),key())]);assert.equal(results.filter(r=>r.status==='fulfilled').length,1);assert.equal((await getEvent(event.id)).categories.find(c=>c.id===event.categories[0].id)?.available,0);});

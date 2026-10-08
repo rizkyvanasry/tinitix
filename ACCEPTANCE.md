@@ -99,3 +99,10 @@ Pemilik belum memiliki dua ponsel dan meminta pengujian otomatis dilanjutkan. Bu
 - Suite transaksi pada schema Neon terisolasi: 20/20 lulus pada 8 Oktober, termasuk checkout/pembayaran duplikat/expiry bersamaan. Regression test urutan kategori dan type-check lulus. [CI commit aplikasi berhasil](https://github.com/rizkyvanasry/tinitix/actions/runs/37757087199).
 - Batas uji QR: isi PNG dibaca dengan mode `PURE_BARCODE`. Deteksi posisi QR pada beberapa PNG tidak konsisten dalam percobaan decoder; keberhasilan pembacaan isi tidak membuktikan fokus/deteksi kamera. Lanjutkan uji kamera dua ponsel, layar/cetakan, dan jarak pemindaian sebelum acceptance lapangan lengkap.
 - Render dan pembayaran nyata tetap ditunda. Hasil ini tidak menyatakan siap penjualan berbayar atau worker sudah online.
+
+
+## Perubahan alur pembeli ? 9 Oktober 2026
+
+Halaman kategori tiket sekarang meneruskan pilihan ke halaman `/events/[slug]/buyer`. Data pembeli berisi nama sesuai KTP/SIM, satu alamat email tanpa konfirmasi ulang, telepon wajib, jenis kelamin, dan kanal pilihan QRIS/transfer bank/e-wallet. Kanal masih simulasi; tidak ada QRIS atau rekening pembayaran nyata. Migrasi `004_buyer_details` menambah kolom nullable untuk pesanan lama. Jenis kelamin masuk kolom Gender pada Excel; kanal pilihan dicatat di Remark dengan penanda simulasi.
+
+Bukti 13 pemeriksaan di atas berlaku untuk alur sebelum perubahan ini. Fixture pengujian disesuaikan; suite dan uji browser belum dijalankan ulang untuk alur halaman pembeli baru.

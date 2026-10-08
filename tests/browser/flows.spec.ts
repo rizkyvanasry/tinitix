@@ -32,8 +32,8 @@ test('catalog, search, responsive layout and detail',async({page},testInfo)=>{
 });
 test('single + couple summary, buyer validation and preview guard',async({page},testInfo)=>{
  await page.goto('/events/midnight-frequency/tickets');await page.getByRole('button',{name:'Tambah Presale 1 Single Ticket',exact:true}).click();await page.getByRole('button',{name:'Tambah Presale 1 Couple Ticket',exact:true}).click();await expect(page.getByText('3 orang · 2 unit pembelian')).toBeVisible();await expect(page.locator('.summary-total')).toContainText(/Rp\s*550\.000/);
- await page.getByLabel('Nama lengkap').fill('Dina Example');await page.getByLabel('Alamat email').fill('dina@example.test');await page.getByLabel('Konfirmasi email').fill('wrong@example.test');await page.getByLabel('Nomor WhatsApp').click();await expect(page.getByText('Alamat email belum sama.')).toBeVisible();await page.getByLabel('Konfirmasi email').fill('dina@example.test');await page.getByRole('checkbox').check();
- await expect(page.getByRole('button',{name:'Checkout',exact:true})).toBeDisabled();await expect(page.getByText('Checkout belum diaktifkan.')).toBeVisible();await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await page.getByRole('button',{name:'Checkout',exact:true}).click();await page.getByLabel('Nama lengkap').fill('Dina Example');await page.getByLabel('Alamat email').fill('dina@example.test');await page.getByLabel('Nomor telepon').fill('081234567890');await page.getByLabel('Jenis kelamin').selectOption('female');await page.getByRole('radio',{name:/QRIS/}).check();await page.getByRole('checkbox').check();
+ await expect(page.getByRole('button',{name:'Lanjut ke pembayaran',exact:true})).toBeDisabled();await expect(page.getByText('Checkout belum diaktifkan.')).toBeVisible();await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'test-results/checkout-'+testInfo.project.name+'.png',fullPage:true});
 });
 test('admin preview and auth surfaces work without fake transactions',async({page},testInfo)=>{
