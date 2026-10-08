@@ -108,3 +108,12 @@ Halaman kategori tiket sekarang meneruskan pilihan ke halaman `/events/[slug]/bu
 Bukti 13 pemeriksaan di atas berlaku untuk alur sebelum perubahan ini. Fixture pengujian disesuaikan; suite dan uji browser belum dijalankan ulang untuk alur halaman pembeli baru.
 
 Deployment alur pembeli baru: build dan TypeScript lulus di Vercel, migrasi 004 diterapkan, alias Preview aktif. Tes browser tidak dijalankan pada perubahan ini.
+
+
+## Reservasi sebelum data pembeli dan biaya ? 9 Oktober 2026
+
+Checkout dari kategori membuat pesanan reservasi tanpa data pribadi, melalui transaksi yang mengunci baris event. Stok aktif langsung diperhitungkan untuk checkout lain. Halaman pembeli menggunakan cookie akses pesanan dan timer berdasarkan expires_at server (15 menit); refresh dan submit data pembeli tidak memperpanjang waktu. Reservasi kedaluwarsa tidak dihitung sebagai stok terpakai, termasuk ketika worker ditunda. Pembayaran ditolak sebelum data pembeli lengkap.
+
+Pajak default 10% dan biaya layanan default 3%, masing-masing dari subtotal tiket, dibulatkan ke rupiah. EO dapat mengubah persentase di editor event. Angka disimpan pada pesanan saat reservasi sehingga perubahan event tidak mengubah pesanan yang sudah ada. Pesanan lama tetap memakai total lama dan biaya nol. Migrasi tambahan: `005_checkout_holds_fees`. Excel menampilkan biaya/pajak dan mengalokasikannya ke tiket dengan total rupiah tetap cocok.
+
+Perubahan ini belum diuji ulang melalui browser atau uji konkurensi; bukti pengujian sebelumnya tetap berlaku hanya untuk versi yang dicatat pada masing-masing bukti.

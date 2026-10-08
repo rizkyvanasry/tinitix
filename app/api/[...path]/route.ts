@@ -3,7 +3,7 @@ import {NextRequest,NextResponse,after} from 'next/server';
 import {ZodError} from 'zod';
 import {currentUser,requireRole,login,register,requestAuthEmail,confirmAuth} from '@/lib/auth';
 import {listEvents,getEvent,loadEvent} from '@/lib/catalog';
-import {createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment} from '@/lib/orders';
+import {completeBuyer,createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment} from '@/lib/orders';
 import {adminOverview,saveEvent,staffEvents,checkIn,assignStaff,cancelTicket} from '@/lib/admin';
 import {adminOrderPage,adminOrderExportBatch,csvCell} from '@/lib/admin-orders';
 import {database} from '@/lib/db';
@@ -68,7 +68,7 @@ async function handle(req:NextRequest){
   }});
   return new NextResponse(stream,{headers:{'Content-Type':'text/csv;charset=utf-8','Content-Disposition':'attachment; filename="tinitix-orders.csv"','Cache-Control':'no-store'}});
  }
- const match=route.match(/^orders\/([^/]+)(?:\/(payment|simulate|resend))?$/);
+ const match=route.match(/^orders\/([^/]+)(?:\/(payment|simulate|resend|buyer))?$/);
  if(method==='GET'&&match)return json(await getOrder(match[1],req.cookies.get('order_'+match[1])?.value,user));
  if(method==='POST'&&route==='admin/poster'){
   await requireRole(sid,['admin']);if(!process.env.BLOB_READ_WRITE_TOKEN)throw new AppError(503,'Vercel Blob belum terhubung.');
@@ -91,9 +91,11 @@ async function handle(req:NextRequest){
  if(route==='auth/confirm')return json(await confirmAuth(body));
  if(route==='orders/access-link'){const result=await requestAccess(body.email);after(processMailJobs);return json(result);}
  if(route==='orders/exchange'){const result=await exchangeAccess(String(body.token||''));const response=json({id:result.id});response.cookies.set('order_'+result.id,result.access,{...sessionOptions,maxAge:7200});return response;}
+ if(route==='orders/reserve'){await rateLimit('reserve:'+ip,10,60);const result=await createOrder(body,req.headers.get('idempotency-key')||'',true);const response=json({id:result.id},201);response.cookies.set('order_'+result.id,result.access,{...sessionOptions,maxAge:7200});return response;}
  if(route==='orders'){const result=await createOrder(body,req.headers.get('idempotency-key')||'');const response=json({id:result.id},201);response.cookies.set('order_'+result.id,result.access,{...sessionOptions,maxAge:7200});after(processMailJobs);return response;}
  if(match){
   const orderId=match[1],access=req.cookies.get('order_'+orderId)?.value;
+  if(match[2]==='buyer'){const result=await completeBuyer(orderId,body,access,user);after(processMailJobs);return json(result);}
   if(match[2]==='payment')return json(await createPayment(orderId,access,user));
   if(match[2]==='resend'){const result=await resendOrder(orderId,access,user);after(processMailJobs);return json(result);}
   if(match[2]==='simulate'){

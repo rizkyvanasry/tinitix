@@ -14,7 +14,7 @@ const pg=await createTestDatabase();
 setTestDatabase({query:async(sql,values)=>(await pg.query(sql,values)) as any,transaction:fn=>pg.transaction(tx=>fn({query:async(sql,values)=>(await tx.query(sql,values)) as any}))});
 after(()=>pg.close());
 test('event workbook reconciles 1205 orders, couple amounts, timezones, scans and organization access',async()=>{
- await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/004_buyer_details.sql',import.meta.url),'utf8'));
+ await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/004_buyer_details.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/005_checkout_holds_fees.sql',import.meta.url),'utf8'));
  await pg.query("INSERT INTO organizations VALUES('tinitix','tinitix'),('other','Other')");
  const admin:User={id:'admin',name:'Admin',email:'admin@example.test',role:'admin',verified:true,organizationId:'tinitix'};
  const event=await saveEvent({...seedEvents()[0],id:undefined},admin);

@@ -24,3 +24,5 @@
 @media(max-width:600px){.catalog-results{font-size:11px;gap:8px}.catalog-results p>span{display:none}.active-filters{gap:6px}.main-nav.open{box-shadow:0 16px 24px #11182712}.main-nav.open a{border-bottom:1px solid var(--line);padding-block:10px}.main-nav.open a:last-child{border-bottom:0}}
 
 .payment-channel-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}.payment-channel-option{display:flex;align-items:center;gap:12px;padding:18px;border:1px solid var(--line,#d8d9d1);cursor:pointer}.payment-channel-option.selected{border-color:#2e49c9;background:#f0f3ff}.payment-channel-option input{accent-color:#2e49c9;width:18px;height:18px}.payment-channel-option small{display:block;margin-top:4px;color:#666;font-size:12px}.checkout-steps{flex-wrap:wrap}
+
+.reservation-timer{display:flex;align-items:center;gap:10px;width:fit-content;padding:10px 16px;margin:0 0 24px;border:1px solid #ccd5fa;border-radius:8px;background:#f0f3ff;color:#263eac;font-size:14px}.reservation-timer strong{font-variant-numeric:tabular-nums;font-size:18px;white-space:nowrap}
