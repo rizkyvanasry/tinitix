@@ -34,8 +34,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-icv78px7b-naskara-ai.vercel.app`, ID `dpl_25z8bx5cGKSjKHqU5WqFEEEkxxzN`.
-- Commit sumber deployment aktif: `1223ea1`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
+- Deployment Preview aktif: `tinitix-staging-rjg1qa76e-naskara-ai.vercel.app`, ID `dpl_FroYj6XnukZXS46qjyYMzfFmPnw2`.
+- Commit sumber deployment aktif: `5de83c4`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
 - Riwayat smoke 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
@@ -119,3 +119,7 @@ Pajak default 10% dan biaya layanan default 3%, masing-masing dari subtotal tike
 Perubahan ini belum diuji ulang melalui browser atau uji konkurensi; bukti pengujian sebelumnya tetap berlaku hanya untuk versi yang dicatat pada masing-masing bukti.
 
 Deploy reservasi dan biaya: Preview Ready, build dan TypeScript lulus pada commit `1223ea1`. Tes browser dan konkurensi alur reservasi baru belum dijalankan.
+
+## Navigasi Organizer ? 9 Oktober 2026
+
+Menu Organizer menggantikan Jelajahi Event pada header, dengan halaman Create Event, Our Services, dan Creator Help Center. Build serta TypeScript Vercel lulus; pengujian browser belum dijalankan untuk perubahan navigasi ini.
