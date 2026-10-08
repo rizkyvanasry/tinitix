@@ -1,0 +1,94 @@
+{
+  "startedAt": "2026-10-08T17:59:29.813Z",
+  "slug": "qa-acceptance-1791482369813",
+  "checks": [
+    {
+      "name": "admin-login",
+      "passed": true
+    },
+    {
+      "name": "poster-upload",
+      "passed": true
+    },
+    {
+      "name": "banner-upload",
+      "passed": true
+    },
+    {
+      "name": "draft-hidden",
+      "passed": true
+    },
+    {
+      "name": "edit-publish-catalog",
+      "passed": true
+    },
+    {
+      "name": "public-poster-banner",
+      "passed": true
+    },
+    {
+      "name": "couple-checkout-two-readable-qr",
+      "passed": true
+    },
+    {
+      "name": "simultaneous-same-qr-one-valid",
+      "passed": true
+    },
+    {
+      "name": "second-qr-valid-repeat-rejected-ui",
+      "passed": true
+    },
+    {
+      "name": "last-stock-one-winner-duplicate-payment-one-ticket",
+      "passed": true,
+      "checkoutStatuses": [
+        201,
+        409
+      ],
+      "paymentStatuses": [
+        200,
+        409
+      ]
+    },
+    {
+      "name": "cannot-reduce-quota-below-sales",
+      "passed": true
+    },
+    {
+      "name": "six-sheet-excel-reconciles",
+      "passed": true,
+      "paidOrders": 2,
+      "tickets": 3,
+      "gross": 45002,
+      "checkIns": 2
+    },
+    {
+      "name": "admin-order-search",
+      "passed": true
+    }
+  ],
+  "eventId": "event_fab0fb1e9bb809636afd5eed",
+  "orderIds": [
+    "TIX_c4233264382af1d704648033",
+    "TIX_bc009f7685daae22c802fdc2"
+  ],
+  "physicalPhones": "not-tested",
+  "passed": true,
+  "qaEventClosed": true,
+  "finishedAt": "2026-10-08T18:01:29.184Z",
+  "deployment": "https://tinitix-staging-crg0um4rm-naskara-ai.vercel.app",
+  "applicationCommit": "1cdc78b8119b3bcfa0fee6dfbfb691b9c625b721",
+  "databaseReconciliation": {
+    "orders": 2,
+    "paidOrders": 2,
+    "gross": 45002,
+    "tickets": 3,
+    "checkIns": 2,
+    "convertedReservations": 2,
+    "activeReservations": 0,
+    "paymentEvents": 2,
+    "emailJobsSent": 4
+  },
+  "emailInbox": "Not reconfirmed for this QA event; provider acceptance only. Earlier couple inbox flow confirmed by owner on 8 October.",
+  "qrDecoding": "Exact PNG decoded with PURE_BARCODE; image localization was inconsistent for some PNGs. Physical camera scanning remains unverified."
+}

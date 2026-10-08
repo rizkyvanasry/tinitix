@@ -1,14 +1,14 @@
-# Status penerimaan Tinitix — 7 Oktober 2026
+# Status penerimaan Tinitix — 9 Oktober 2026
 
 Status layanan nyata dibedakan dari bukti lokal. Lulus tes lokal tidak menyelesaikan acceptance staging atau kesiapan penjualan nyata.
 
 | ID | Status | Bukti / sisa pekerjaan |
 | --- | --- | --- |
 | B1 | Lulus staging | [Preview HTTPS](https://tinitix-staging-preview.vercel.app) terhubung ke Neon PostgreSQL khusus staging. Migrasi `001_initial`, `002_order_listing`, dan `003_report_payments` diterapkan; pemeriksaan database, migrasi, dan admin terverifikasi berhasil. Login admin di deployment Preview merespons HTTP 200. |
-| B2 | Berjalan | Blob `tinitix-staging-posters` terhubung ke Preview. Domain tinitix.id dilaporkan Verified oleh pemilik. Resend menerima dua email uji couple pada 8 Oktober; penguji mengonfirmasi tautan email berhasil menampilkan dua QR pada 8 Oktober. Upload lewat admin staging belum diuji. |
-| B3 | Container terverifikasi, host belum | CI berhasil membangun image Node 24, menjalankan satu batch worker dengan PostgreSQL, dan menjalankan ops:check. Compose mengatur restart proses. Host online, uji crash/restart, dan uji laptop mati belum tersedia. |
-| B4 | Lulus lokal, staging belum | Browser dengan PostgreSQL terisolasi: admin login/publish, tamu checkout couple, simulasi paid, dua QR, tautan email antrean, dua check-in dan penolakan scan ulang. Belum mengirim email nyata atau menguji kamera fisik. |
-| B5 | Lulus PostgreSQL lokal | PostgreSQL 17, koneksi paralel: stok terakhir satu pemenang, QR bersamaan satu valid, checkout/settlement duplikat/expiry tetap konsisten. Perlu ulang pada deployment staging. |
+| B2 | Lulus staging | Blob `tinitix-staging-posters` terhubung ke Preview. Domain tinitix.id dilaporkan Verified oleh pemilik. Resend menerima dua email uji couple pada 8 Oktober; penguji mengonfirmasi tautan email berhasil menampilkan dua QR pada 8 Oktober. Upload poster dan banner melalui admin staging lulus 9 Oktober; kedua gambar tampil pada detail event. |
+| B3 | Host ditunda pemilik | CI berhasil membangun image Node 24, menjalankan satu batch worker dengan PostgreSQL, dan menjalankan ops:check. Compose mengatur restart proses. Render berbayar ditunda pemilik 8 Oktober; host online, uji crash/restart, dan uji laptop mati belum tersedia. |
+| B4 | Otomasi staging lulus; kamera belum | Pada 9 Oktober: admin create/edit/publish, tamu checkout couple, simulasi paid, dua PNG QR dibaca, dua sesi scan serentak, dan penolakan scan ulang lulus di Preview. Alur inbox sebelumnya dikonfirmasi pemilik 8 Oktober. Kamera dua ponsel belum diuji. |
+| B5 | Konkurensi staging lulus; host mandiri belum | Preview/Neon: dua checkout stok terakhir menghasilkan 201/409, scan QR bersamaan satu valid, pembayaran bersamaan hanya satu tiket. Suite transaksi 20/20 juga lulus pada schema Neon terisolasi, termasuk checkout/settlement/expiry paralel. Expiry tanpa kunjungan dan laptop mati masih menunggu worker online. |
 | B6 | Ditunda pemilik | Pilihan gateway dan akun merchant belum ditetapkan. |
 | B7 | Belum selesai | Prosedur awal di OPERATIONS.md; pencatatan kasus/refund terstruktur dan alur provider menunggu B6. |
 | B8 | Persiapan tersedia | Pemeriksaan antrean/transaksi dan runbook deploy/rollback/restore tersedia. Monitor online, drill restore cloud, dan kebijakan bisnis final belum tersedia. |
@@ -34,9 +34,9 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-rf4zw8wn1-naskara-ai.vercel.app`, ID `dpl_Cp4CQuhmMspc4gV7qcZiTFXY4bQT`.
-- Commit sumber deployment: `8a94574` (aplikasi laporan dari `ca1811b`, berikut pembaruan dokumentasi). Redeploy 8 Oktober mengaktifkan konfigurasi email Preview; pembaruan dokumentasi setelahnya tidak mengubah aplikasi.
-- Diverifikasi ulang 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
+- Deployment Preview aktif: `tinitix-staging-crg0um4rm-naskara-ai.vercel.app`, ID `dpl_9PnLDycKBSSMjg9VEZRPLaNDnUEr`.
+- Commit sumber deployment: `1cdc78b`. Deploy Preview 8 Oktober memperbaiki urutan kategori editor. Pengujian lengkap terbaru berlangsung 9 Oktober 2026 pukul 00.59?01.01 WIB. Perubahan setelah commit ini hanya menyempurnakan skrip pengujian dan dokumentasi.
+- Riwayat smoke 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
 - Akses masih dilindungi login Vercel. Penguji email/ponsel harus memiliki akses Preview; sukses kirim provider saja tidak membuktikan tautan dapat dibuka penguji.
@@ -50,8 +50,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 | --- | --- | --- |
 | 1. Preview, migrasi, login, katalog, Excel | Selesai | Bukti live dan commit tercatat di atas. |
 | 2. Domain pengirim dan inbox nyata | Lulus staging | Domain Verified, konfigurasi Preview aktif, dua email diterima API Resend; pemilik mengonfirmasi tautan email menampilkan dua QR pada 8 Oktober 2026. |
-| 3. Worker selalu online | Menunggu host | Dockerfile dan restart policy tersedia; belum ada host yang dapat diakses. Harus dibuktikan crash/restart, expiry, dan retry email dari perangkat lain. |
-| 4. Uji lapangan staging | Belum selesai | Otomasi browser PostgreSQL terisolasi sudah lulus, termasuk couple, check-in dan Excel. Dua ponsel fisik, inbox nyata, host mandiri, dan perebutan stok melalui deployment masih perlu dijalankan. |
+| 3. Worker selalu online | Ditunda pemilik | Dockerfile dan restart policy tersedia; belum ada host yang dapat diakses. Harus dibuktikan crash/restart, expiry, dan retry email dari perangkat lain. |
+| 4. Uji lapangan staging | Belum selesai | Otomasi browser PostgreSQL terisolasi sudah lulus, termasuk couple, check-in dan Excel. Pada 9 Oktober, otomasi Preview/Neon termasuk perebutan stok dan Excel sudah lulus. Inbox nyata dikonfirmasi 8 Oktober. Dua ponsel fisik dan host mandiri masih perlu diuji. |
 | 5. Gateway dan aturan bisnis | Ditunda pemilik | Pemilik menegaskan kembali pembayaran nyata tetap ditunda pada sesi ini. |
 | 6. Pembayaran nyata dan rekonsiliasi | Ditunda | Menunggu langkah 5. |
 | 7. Pilot berbayar | Belum dapat dimulai | Menunggu langkah 4 dan 6 serta monitor, restore, kebijakan final, dan latihan petugas. |
@@ -61,15 +61,15 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 Isi setiap baris dengan waktu WIB, ID event/order, hasil aktual, dan referensi bukti tersensor. Jangan menyalin tautan akses atau QR.
 
 - [x] Domain pengirim berstatus terverifikasi pada Resend (konfirmasi pemilik); konfigurasi pengiriman diterima provider.
-- [ ] Event uji dipublikasikan admin; satu pembelian couple dibayar simulasi.
+- [x] Event uji dipublikasikan admin; satu pembelian couple dibayar simulasi (9 Oktober).
 - [x] Provider menerima email; penguji mengonfirmasi keberhasilan alur email dengan balasan "ok qr sudah tampil" pada 8 Oktober 2026.
 - [x] Tautan email dibuka penguji dan dua QR tampil; API order juga mengonfirmasi dua ID tiket berbeda.
 - [ ] Ponsel A dan B check-in; scan ulang ditolak. Scan serentak QR sama menghasilkan satu valid.
-- [ ] Dua checkout serentak memperebutkan satu stok; hanya satu reservasi berhasil.
+- [x] Dua checkout serentak memperebutkan satu stok; hanya satu reservasi berhasil (Preview/Neon, 9 Oktober).
 - [ ] Worker online melepaskan reservasi setelah expiry tanpa kunjungan website dan saat laptop mati.
 - [ ] Crash worker di host menghasilkan restart dan batch berikutnya berhasil.
 - [ ] Gangguan email sementara diuji secara terkendali; retry berhasil tanpa menerbitkan tiket ulang.
-- [ ] Order, pembayaran simulasi, tiket, check-in, dan laporan Excel cocok; temuan kritis dicatat dan diselesaikan.
+- [x] Order, pembayaran simulasi, tiket, check-in, dan enam sheet Excel cocok (9 Oktober); bug urutan kategori diperbaiki. Kamera fisik tetap belum diverifikasi.
 
 
 ## Bukti email staging - 8 Oktober 2026
@@ -80,3 +80,22 @@ Isi setiap baris dengan waktu WIB, ID event/order, hasil aktual, dan referensi b
 - Tiga email sebelum Resend aktif berisi tautan kedaluwarsa (lebih dari 24 jam) ditandai expired dan dicatat di audit_logs. Pesan disimpan sebagai bukti dan tidak dikirim ulang.
 - Pengiriman ini dipicu manual lewat endpoint maintenance. Belum membuktikan worker online mandiri, retry setelah gangguan, atau operasi saat laptop mati.
 - Tautan menggunakan alias Preview HTTPS yang masih dilindungi login Vercel. Pada 8 Oktober 2026, pemilik menjawab "ok qr sudah tampil" setelah diminta memeriksa email dan membuka tautannya. Uji email sampai dua QR dinyatakan lulus berdasarkan konfirmasi penguji; pemindaian fisik belum diuji.
+
+
+## Pengerjaan 1?3: hasil otomatis 9 Oktober 2026
+
+Pemilik belum memiliki dua ponsel dan meminta pengujian otomatis dilanjutkan. Bukti tersensor: [hasil 13 pemeriksaan](docs/staging-acceptance-2026-10-09.json). Alur berjalan di alias Preview dengan database Neon dan Blob nyata, pembayaran simulasi, serta dua sesi browser terpisah.
+
+| Pekerjaan | Hasil |
+| --- | --- |
+| 1. Admin EO | Login, buat draft, upload poster/banner, sembunyikan draft dari katalog, edit, publish, tampilkan gambar publik, dan proteksi kuota di bawah penjualan lulus. Bug kategori tertukar ketika editor dibuka ulang diperbaiki pada `1cdc78b`. |
+| 2. Check-in otomatis | Pembelian couple menghasilkan dua PNG QR dengan isi berbeda. Dua sesi memindai QR pertama bersamaan: satu `valid`, satu `already_used`. QR kedua valid melalui UI; scan ulang ditolak. Dua ponsel/kamera fisik belum diuji. |
+| 3. Stok dan laporan | Dua checkout satu stok: HTTP 201/409. Dua simulasi pembayaran bersamaan: HTTP 200/409 (`Pesanan tidak dapat dibayar` setelah paid), dengan satu tiket untuk order tersebut. Pencarian order dan ekspor enam sheet lewat UI lulus. |
+
+- Event QA: `event_fab0fb1e9bb809636afd5eed`, slug `qa-acceptance-1791482369813`; ditutup setelah tes. Data QA dipertahankan untuk audit.
+- Couple: `TIX_c4233264382af1d704648033`; single stok terakhir: `TIX_bc009f7685daae22c802fdc2`.
+- API laporan, Excel, dan query database read-only cocok: 2 pesanan paid, 3 tiket, total Rp45.002, 2 check-in, 2 reservasi converted, 0 reservasi aktif, 2 payment events. Harga couple Rp35.001 dibagi ke dua tiket tanpa selisih pembulatan.
+- Empat email QA berstatus sent di database. Ini bukti penerimaan provider, bukan konfirmasi inbox tambahan untuk event QA ini.
+- Suite transaksi pada schema Neon terisolasi: 20/20 lulus pada 8 Oktober, termasuk checkout/pembayaran duplikat/expiry bersamaan. Regression test urutan kategori dan type-check lulus. [CI commit aplikasi berhasil](https://github.com/rizkyvanasry/tinitix/actions/runs/37757087199).
+- Batas uji QR: isi PNG dibaca dengan mode `PURE_BARCODE`. Deteksi posisi QR pada beberapa PNG tidak konsisten dalam percobaan decoder; keberhasilan pembacaan isi tidak membuktikan fokus/deteksi kamera. Lanjutkan uji kamera dua ponsel, layar/cetakan, dan jarak pemindaian sebelum acceptance lapangan lengkap.
+- Render dan pembayaran nyata tetap ditunda. Hasil ini tidak menyatakan siap penjualan berbayar atau worker sudah online.

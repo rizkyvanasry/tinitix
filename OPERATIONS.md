@@ -4,6 +4,8 @@ Dokumen ini menyiapkan prosedur. Hosting worker, notifikasi insiden, restore bac
 
 ## Worker mandiri
 
+Pada 8 Oktober 2026, pemilik menunda aktivasi Render berbayar. Blueprint tetap tersedia, tetapi service belum dibuat/dinyatakan online. Pengembangan dan pengujian staging dapat dilanjutkan; operasi expiry dan retry email tanpa kunjungan website masih menjadi syarat sebelum pilot berbayar.
+
 `render.yaml` mendefinisikan worker staging khusus (`tinitix-staging-worker`) di Render, region Singapore, memakai `Dockerfile.worker`, satu instance pada compute `0.5c-512mb`, dan deploy setelah pemeriksaan CI lulus. Paket compute ini berbayar; biaya final harus dibaca pada layar Render sebelum membuat service. Blueprint tidak menyimpan nilai secret. Saat membuat Blueprint dari repo GitHub, Render meminta `DATABASE_URL`, `APP_SECRET`, `RESEND_API_KEY`, dan `EMAIL_FROM`. Pakai database Neon staging, APP_SECRET yang sama dengan Preview Vercel, key Resend milik domain tinitix.id, dan `Tinitix <info@tinitix.id>`. `APP_URL` dan interval 30 detik sudah ada di Blueprint. Jangan menyalin credential ke Git atau chat.
 
 Setelah service live, periksa log `maintenance: ok` berulang. Untuk acceptance, buat satu reservasi uji tanpa membayar, tutup browser/laptop, lalu periksa dari perangkat lain bahwa status menjadi expired dan stok kembali. Uji restart dengan menghentikan proses secara terkendali melalui fasilitas Render, lalu pastikan instance pulih dan batch berikutnya berhasil. Catat bukti di ACCEPTANCE.md. Jangan menganggap keberhasilan Blueprint sebagai bukti worker online sebelum pemeriksaan ini.
@@ -46,3 +48,12 @@ Pulihkan dengan `pg_restore --no-owner --no-acl` ke database kosong yang terpisa
 ## Sebelum pilot berbayar
 
 Pemilik perlu menetapkan identitas penyelenggara, kontak dukungan, waktu layanan, biaya/pajak, kebijakan refund/pembatalan/perubahan jadwal, retensi data, dan penanganan insiden. Halaman terms/privacy masih menjelaskan pratinjau sampai keputusan tersebut disahkan. Gateway, refund, pemantauan, restore, dan simulasi petugas menjadi gerbang pilot. Batasi stok pilot dan rekonsiliasi pembayaran, jumlah tiket, serta check-in setiap hari. Jangan mulai pilot ketika bug kritis terbuka.
+
+
+## Pengujian otomatis staging
+
+`scripts/accept-staging.mjs` menjalankan alur admin, upload Blob, checkout simulasi couple, dua sesi check-in, perebutan stok terakhir, pembayaran duplikat, dan rekonsiliasi enam sheet Excel pada alias Preview. Skrip membuat event/pesanan QA dan mengirim email transaksi ke inbox penguji yang diizinkan. Event ditutup pada akhir pengujian; pesanan dipertahankan sebagai bukti.
+
+Jalankan dengan Node 24 dan Chromium Playwright tersedia. Isi variabel melalui konfigurasi privat: `STAGING_URL=https://tinitix-staging-preview.vercel.app`, `STAGING_QA_CONFIRM=run`, `STAGING_ADMIN_EMAIL`, `STAGING_ADMIN_PASSWORD`, `STAGING_TESTER_EMAIL`, dan `STAGING_BYPASS` (token otomasi resmi project Vercel). Jika browser disimpan di lokasi khusus, isi `PLAYWRIGHT_BROWSERS_PATH`. Lalu jalankan `node scripts/accept-staging.mjs`. Jangan menaruh credential pada command line, commit, atau laporan.
+
+Bukti tersensor tersimpan pada `.vercel/staging-qa/result-*.json` yang diabaikan Git. Hasil dua sesi terpisah dan pembacaan PNG QR tidak menggantikan uji kamera dua ponsel fisik. Kamera harus diuji untuk izin akses, fokus, keterbacaan layar/cetakan, QR berbeda, scan ulang, dan scan serentak sebelum acceptance lapangan dinyatakan lengkap.
