@@ -34,8 +34,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-crg0um4rm-naskara-ai.vercel.app`, ID `dpl_9PnLDycKBSSMjg9VEZRPLaNDnUEr`.
-- Commit sumber deployment: `1cdc78b`. Deploy Preview 8 Oktober memperbaiki urutan kategori editor. Pengujian lengkap terbaru berlangsung 9 Oktober 2026 pukul 00.59?01.01 WIB. Perubahan setelah commit ini hanya menyempurnakan skrip pengujian dan dokumentasi.
+- Deployment Preview aktif: `tinitix-staging-o83d0095e-naskara-ai.vercel.app`, ID `dpl_1MYTa3ANcyLGGCb5otZvTc1HREXE`.
+- Commit sumber deployment aktif: `06033cc`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk halaman data pembeli terpisah. Migrasi `004_buyer_details` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
 - Riwayat smoke 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
@@ -106,3 +106,5 @@ Pemilik belum memiliki dua ponsel dan meminta pengujian otomatis dilanjutkan. Bu
 Halaman kategori tiket sekarang meneruskan pilihan ke halaman `/events/[slug]/buyer`. Data pembeli berisi nama sesuai KTP/SIM, satu alamat email tanpa konfirmasi ulang, telepon wajib, jenis kelamin, dan kanal pilihan QRIS/transfer bank/e-wallet. Kanal masih simulasi; tidak ada QRIS atau rekening pembayaran nyata. Migrasi `004_buyer_details` menambah kolom nullable untuk pesanan lama. Jenis kelamin masuk kolom Gender pada Excel; kanal pilihan dicatat di Remark dengan penanda simulasi.
 
 Bukti 13 pemeriksaan di atas berlaku untuk alur sebelum perubahan ini. Fixture pengujian disesuaikan; suite dan uji browser belum dijalankan ulang untuk alur halaman pembeli baru.
+
+Deployment alur pembeli baru: build dan TypeScript lulus di Vercel, migrasi 004 diterapkan, alias Preview aktif. Tes browser tidak dijalankan pada perubahan ini.
