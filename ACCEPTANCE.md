@@ -5,7 +5,7 @@ Status layanan nyata dibedakan dari bukti lokal. Lulus tes lokal tidak menyelesa
 | ID | Status | Bukti / sisa pekerjaan |
 | --- | --- | --- |
 | B1 | Lulus staging | [Preview HTTPS](https://tinitix-staging-preview.vercel.app) terhubung ke Neon PostgreSQL khusus staging. Migrasi `001_initial`, `002_order_listing`, dan `003_report_payments` diterapkan; pemeriksaan database, migrasi, dan admin terverifikasi berhasil. Login admin di deployment Preview merespons HTTP 200. |
-| B2 | Berjalan | Blob `tinitix-staging-posters` terhubung ke Preview. Upload lewat admin staging dan email inbox nyata belum diuji; domain email belum dipilih. |
+| B2 | Berjalan | Blob `tinitix-staging-posters` terhubung ke Preview. Domain tinitix.id dilaporkan Verified oleh pemilik. Resend menerima dua email uji couple pada 8 Oktober; inbox dan pembukaan dua QR dari email menunggu konfirmasi penguji. Upload lewat admin staging belum diuji. |
 | B3 | Container terverifikasi, host belum | CI berhasil membangun image Node 24, menjalankan satu batch worker dengan PostgreSQL, dan menjalankan ops:check. Compose mengatur restart proses. Host online, uji crash/restart, dan uji laptop mati belum tersedia. |
 | B4 | Lulus lokal, staging belum | Browser dengan PostgreSQL terisolasi: admin login/publish, tamu checkout couple, simulasi paid, dua QR, tautan email antrean, dua check-in dan penolakan scan ulang. Belum mengirim email nyata atau menguji kamera fisik. |
 | B5 | Lulus PostgreSQL lokal | PostgreSQL 17, koneksi paralel: stok terakhir satu pemenang, QR bersamaan satu valid, checkout/settlement duplikat/expiry tetap konsisten. Perlu ulang pada deployment staging. |
@@ -34,14 +34,14 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-q45i4on7s-naskara-ai.vercel.app`, ID `dpl_5XGyz7DqPY8hLqpnxp963hXZZRXQ`.
-- Commit aplikasi: `ca1811b5f85921482a74c9bc96e25b494cc785f5` (laporan penjualan dan ekspor Excel). Pembaruan dokumen penerimaan setelah commit ini tidak mengubah aplikasi.
+- Deployment Preview aktif: `tinitix-staging-rf4zw8wn1-naskara-ai.vercel.app`, ID `dpl_Cp4CQuhmMspc4gV7qcZiTFXY4bQT`.
+- Commit sumber deployment: `8a94574` (aplikasi laporan dari `ca1811b`, berikut pembaruan dokumentasi). Redeploy 8 Oktober mengaktifkan konfigurasi email Preview; pembaruan dokumentasi setelahnya tidak mengubah aplikasi.
 - Diverifikasi ulang 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
 - Akses masih dilindungi login Vercel. Penguji email/ponsel harus memiliki akses Preview; sukses kirim provider saja tidak membuktikan tautan dapat dibuka penguji.
 - APP_SECRET/CRON_SECRET tersimpan sebagai secret Preview. Blob khusus poster terhubung. Kredensial admin hanya tersimpan lokal dan diabaikan Git; file login/cookie sementara verifikasi sudah dihapus.
-- RESEND_API_KEY dan EMAIL_FROM belum terpasang pada Preview. Domain pengirim, inbox penguji, dan host worker belum dikonfirmasi.
+- RESEND_API_KEY (huruf besar) dan EMAIL_FROM tersedia sebagai Sensitive pada Preview. Domain tinitix.id Verified menurut konfirmasi pemilik. Resend menerima dua email uji; konfirmasi inbox dan host worker masih menunggu. Nama lama resend_api_key huruf kecil tidak dipakai aplikasi.
 - Project website `naskara-ai` tidak diubah; nama workspace Vercel tersebut menaungi project terpisah `tinitix-staging`.
 
 ## Urutan lanjutan pemilik (7 Oktober 2026)
@@ -49,7 +49,7 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 | Langkah | Status | Bukti / ketergantungan |
 | --- | --- | --- |
 | 1. Preview, migrasi, login, katalog, Excel | Selesai | Bukti live dan commit tercatat di atas. |
-| 2. Domain pengirim dan inbox nyata | Menunggu akses | Perlu domain yang dikuasai pemilik, akses DNS/Resend, konfigurasi pengirim, serta konfirmasi inbox penguji. |
+| 2. Domain pengirim dan inbox nyata | Menunggu konfirmasi inbox | Domain Verified menurut pemilik; konfigurasi Preview aktif; dua email uji diterima API Resend. Penguji perlu mengonfirmasi inbox dan dua QR melalui tautan email. |
 | 3. Worker selalu online | Menunggu host | Dockerfile dan restart policy tersedia; belum ada host yang dapat diakses. Harus dibuktikan crash/restart, expiry, dan retry email dari perangkat lain. |
 | 4. Uji lapangan staging | Belum selesai | Otomasi browser PostgreSQL terisolasi sudah lulus, termasuk couple, check-in dan Excel. Dua ponsel fisik, inbox nyata, host mandiri, dan perebutan stok melalui deployment masih perlu dijalankan. |
 | 5. Gateway dan aturan bisnis | Ditunda pemilik | Pemilik menegaskan kembali pembayaran nyata tetap ditunda pada sesi ini. |
@@ -60,7 +60,7 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 
 Isi setiap baris dengan waktu WIB, ID event/order, hasil aktual, dan referensi bukti tersensor. Jangan menyalin tautan akses atau QR.
 
-- [ ] Domain pengirim berstatus terverifikasi pada Resend; alamat pengirim sesuai domain.
+- [x] Domain pengirim berstatus terverifikasi pada Resend (konfirmasi pemilik); konfigurasi pengiriman diterima provider.
 - [ ] Event uji dipublikasikan admin; satu pembelian couple dibayar simulasi.
 - [ ] Provider menerima email; penguji secara terpisah mengonfirmasi inbox, bukan hanya antrean/provider.
 - [ ] Tautan dari inbox dibuka pada perangkat penguji dan menampilkan dua QR berbeda.
@@ -70,3 +70,13 @@ Isi setiap baris dengan waktu WIB, ID event/order, hasil aktual, dan referensi b
 - [ ] Crash worker di host menghasilkan restart dan batch berikutnya berhasil.
 - [ ] Gangguan email sementara diuji secara terkendali; retry berhasil tanpa menerbitkan tiket ulang.
 - [ ] Order, pembayaran simulasi, tiket, check-in, dan laporan Excel cocok; temuan kritis dicatat dan diselesaikan.
+
+
+## Bukti email staging ? 8 Oktober 2026
+
+- Nama variabel secret diperbaiki dengan menambahkan RESEND_API_KEY sesuai huruf besar yang dibaca aplikasi; nilai secret tidak ditampilkan atau disimpan di Git.
+- Pembelian uji pada event Midnight Frequency: order `TIX_478ab67d751811e33f727c8e`, satu Presale 1 Couple Ticket. Checkout HTTP 201, pembayaran simulasi HTTP 200; pembacaan API order mengonfirmasi paid dan dua ID tiket berbeda.
+- Setelah redeploy, maintenance terautentikasi HTTP 200 mengembalikan `sent: 2, configured: true`. Kedua email checkout/pembayaran untuk penguji tercatat sent; ini membuktikan penerimaan API provider, bukan penerimaan inbox.
+- Tiga email sebelum Resend aktif berisi tautan kedaluwarsa (lebih dari 24 jam) ditandai expired dan dicatat di audit_logs. Pesan disimpan sebagai bukti dan tidak dikirim ulang.
+- Pengiriman ini dipicu manual lewat endpoint maintenance. Belum membuktikan worker online mandiri, retry setelah gangguan, atau operasi saat laptop mati.
+- Tautan menggunakan alias Preview HTTPS yang masih dilindungi login Vercel. Konfirmasi inbox dan pembukaan dua QR diminta kepada penguji; belum ditandai lulus sampai ada konfirmasi.
