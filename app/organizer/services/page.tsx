@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Check, ScanLine, Ticket, FileSpreadsheet, Clock3 } from 'lucide-react';
 import './services.css';
@@ -25,7 +25,7 @@ export default function Services() {
 
     <section className="services-wrap services-publish">
       <div className="services-poster-stage"><Image src="/posters/soundscape.svg" alt="Contoh poster Soundscape Festival di Tinitix" width={900} height={700} sizes="(max-width: 760px) 90vw, 45vw" /><span>Contoh materi event di Tinitix</span></div>
-      <div className="services-feature-copy"><span className="services-label">HALAMAN EVENT</span><h2>Kesan pertama,<br />sesuai karakter lo.</h2><p>Jadikan halaman event tempat pengunjung mengenal acara sebelum memutuskan datang.</p><ul><li><Check />Poster dan banner dengan identitas event lo.</li><li><Check />Jadwal, lokasi, lineup, dan detail tiket yang jelas.</li><li><Check />Event yang dipublikasikan tampil di katalog.</li></ul><Link href="/events" className="services-link">Jelajahi katalog event <ArrowUpRight size={18} /></Link></div>
+      <div className="services-feature-copy"><span className="services-label">HALAMAN EVENT</span><h2>Kesan pertama,<br />sesuai karakter lo.</h2><p>Jadikan halaman event tempat pengunjung mengenal acara sebelum memutuskan datang.</p><ul><li><Check />Poster dan banner dengan identitas event lo.</li><li><Check />Jadwal, lokasi, lineup, dan detail tiket yang jelas.</li><li><Check />Event yang dipublikasikan tampil di katalog.</li></ul><Link href="/" className="services-link">Jelajahi katalog event <ArrowUpRight size={18} /></Link></div>
     </section>
 
     <section className="services-ticket-band"><div className="services-wrap services-ticket-layout">
