@@ -46,6 +46,14 @@ beforeEach(async()=>{
  event=await saveEvent({...seed,id:undefined,starts:start,ends:end,categories:seed.categories.map(c=>({...c,starts:new Date(Date.now()-86400000).toISOString(),ends:start}))},admin);
 });
 describe('PRD transactional acceptance',()=>{
+ it('event category slots survive price and sale-date changes when reopening and saving the editor',async()=>{
+  const prices=[10001,20001,35001,25001,45001];
+  const edited=await saveEvent({...event,categories:event.categories.map((c,i)=>({...c,price:prices[i],starts:new Date(Date.now()-(i+1)*3600000).toISOString()}))},admin);
+  const reopened=await getEvent(edited.id);
+  assert.deepEqual(reopened.categories.map(c=>c.id),edited.categories.map(c=>c.id));
+  assert.deepEqual(reopened.categories.map(c=>c.people),[1,1,2,1,2]);
+  assert.equal((await saveEvent({...reopened,venue:'Edited venue'},admin)).venue,'Edited venue');
+ });
  it('AC01 only publishes future public events with current starting prices',async()=>{assert.equal((await listEvents()).length,1);await saveEvent({...event,status:'draft'},admin);assert.equal((await listEvents()).length,0);});
  it('AC02 guest checkout validates email confirmation and consent',async()=>{await assert.rejects(createOrder({...purchase(),confirmEmail:'other@example.test'},key()));await assert.rejects(createOrder({...purchase(),accepted:false},key()));const o=await createOrder(purchase(),key());assert.equal((await getOrder(o.id,o.access)).status,'pending');});
  it('AC03 single + couple creates three distinct QR tickets with package prices',async()=>{const single=event.categories[1],couple=event.categories[2];const o=await createOrder(purchase([{categoryId:single.id,quantity:1,price:single.price},{categoryId:couple.id,quantity:1,price:couple.price}]),key());await pay(o);const view=await getOrder(o.id,o.access);assert.equal(view.people,3);assert.equal(view.total,single.price+couple.price);assert.equal(view.tickets.length,3);assert.equal(new Set(view.tickets.map(t=>t.qr)).size,3);});

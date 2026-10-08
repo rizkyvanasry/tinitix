@@ -16,7 +16,9 @@ export function publicEvent(event:Event,used:Record<string,number>={},now=new Da
 }
 export async function loadEvent(db:Db,key:string,lock=false):Promise<Event> {
  const result=await db.query('SELECT * FROM events WHERE id=$1 OR slug=$1'+(lock?' FOR UPDATE':''),[key]);const r=result.rows[0];if(!r)throw new AppError(404,'Event tidak ditemukan.');
- const categories=await db.query('SELECT * FROM categories WHERE event_id=$1 ORDER BY starts_at,price,id',[r.id]);return {...r.data,id:r.id,slug:r.slug,organizationId:r.organization_id,categories:categories.rows.map(categoryFromRow)};
+ // saveEvent assigns the five fixed category slots IDs ending in -cat-0 through -cat-4.
+ // Preserve that order when reopening the editor; prices and sale dates are editable.
+ const categories=await db.query('SELECT * FROM categories WHERE event_id=$1 ORDER BY id',[r.id]);return {...r.data,id:r.id,slug:r.slug,organizationId:r.organization_id,categories:categories.rows.map(categoryFromRow)};
 }
 export async function getEvent(key:string,includeDraft=false):Promise<PublicEvent>{
  if(!hasDatabase()){const event=seedEvents().find(e=>e.slug===key||e.id===key);if(!event)throw new AppError(404,'Event tidak ditemukan.');return publicEvent(event);}
