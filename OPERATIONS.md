@@ -4,6 +4,10 @@ Dokumen ini menyiapkan prosedur. Hosting worker, notifikasi insiden, restore bac
 
 ## Worker mandiri
 
+`render.yaml` mendefinisikan worker staging khusus (`tinitix-staging-worker`) di Render, region Singapore, memakai `Dockerfile.worker`, satu instance pada compute `0.5c-512mb`, dan deploy setelah pemeriksaan CI lulus. Paket compute ini berbayar; biaya final harus dibaca pada layar Render sebelum membuat service. Blueprint tidak menyimpan nilai secret. Saat membuat Blueprint dari repo GitHub, Render meminta `DATABASE_URL`, `APP_SECRET`, `RESEND_API_KEY`, dan `EMAIL_FROM`. Pakai database Neon staging, APP_SECRET yang sama dengan Preview Vercel, key Resend milik domain tinitix.id, dan `Tinitix <info@tinitix.id>`. `APP_URL` dan interval 30 detik sudah ada di Blueprint. Jangan menyalin credential ke Git atau chat.
+
+Setelah service live, periksa log `maintenance: ok` berulang. Untuk acceptance, buat satu reservasi uji tanpa membayar, tutup browser/laptop, lalu periksa dari perangkat lain bahwa status menjadi expired dan stok kembali. Uji restart dengan menghentikan proses secara terkendali melalui fasilitas Render, lalu pastikan instance pulih dan batch berikutnya berhasil. Catat bukti di ACCEPTANCE.md. Jangan menganggap keberhasilan Blueprint sebagai bukti worker online sebelum pemeriksaan ini.
+
 Jalankan di host Docker yang selalu hidup. Buat `.env.worker.local` pada host secara privat dengan `DATABASE_URL`, `APP_SECRET`, `APP_URL`, `RESEND_API_KEY`, `EMAIL_FROM`, dan `WORKER_INTERVAL_MS=30000` yang sesuai staging. APP_SECRET wajib sama dengan aplikasi. File ini diabaikan Git dan build Docker.
 
 ```sh

@@ -1,0 +1,26 @@
+services:
+  - type: worker
+    name: tinitix-staging-worker
+    runtime: docker
+    repo: https://github.com/rizkyvanasry/tinitix
+    branch: main
+    region: singapore
+    plan: 0.5c-512mb
+    numInstances: 1
+    dockerfilePath: ./Dockerfile.worker
+    dockerContext: .
+    autoDeployTrigger: checksPass
+    maxShutdownDelaySeconds: 180
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: APP_URL
+        value: https://tinitix-staging-preview.vercel.app
+      - key: WORKER_INTERVAL_MS
+        value: "30000"
