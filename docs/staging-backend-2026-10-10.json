@@ -1,0 +1,87 @@
+{
+  "startedAt": "2026-10-09T19:00:05.450Z",
+  "slug": "qa-acceptance-1791572405450",
+  "checks": [
+    {
+      "name": "admin-login",
+      "passed": true
+    },
+    {
+      "name": "poster-upload",
+      "passed": true
+    },
+    {
+      "name": "banner-upload",
+      "passed": true
+    },
+    {
+      "name": "draft-hidden",
+      "passed": true
+    },
+    {
+      "name": "edit-publish-catalog",
+      "passed": true
+    },
+    {
+      "name": "public-poster-banner",
+      "passed": true
+    },
+    {
+      "name": "success-page-download-zip-two-readable-qr",
+      "passed": true
+    },
+    {
+      "name": "couple-checkout-two-readable-qr",
+      "passed": true
+    },
+    {
+      "name": "simultaneous-same-qr-one-valid",
+      "passed": true
+    },
+    {
+      "name": "second-qr-valid-repeat-rejected-ui",
+      "passed": true
+    },
+    {
+      "name": "single-ticket-png-download-readable",
+      "passed": true
+    },
+    {
+      "name": "last-stock-one-winner-duplicate-payment-one-ticket",
+      "passed": true,
+      "checkoutStatuses": [
+        201,
+        409
+      ],
+      "paymentStatuses": [
+        200,
+        200
+      ]
+    },
+    {
+      "name": "cannot-reduce-quota-below-sales",
+      "passed": true
+    },
+    {
+      "name": "six-sheet-excel-reconciles",
+      "passed": true,
+      "paidOrders": 2,
+      "tickets": 3,
+      "gross": 50852,
+      "checkIns": 2
+    },
+    {
+      "name": "admin-order-search",
+      "passed": true
+    }
+  ],
+  "eventId": "event_770ffdf2596ba55779001d99",
+  "orderIds": [
+    "TIX_0d48468d55b6c762f93f10fc",
+    "TIX_03c2a94a0e87e4be75b05fb4"
+  ],
+  "physicalPhones": "not-tested",
+  "passed": true,
+  "qaEventClosed": true,
+  "finishedAt": "2026-10-09T19:02:17.904Z"
+}

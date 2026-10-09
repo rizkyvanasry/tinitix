@@ -34,8 +34,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-gqunpjl6y-naskara-ai.vercel.app`, ID `dpl_GeZMJLWUGmevBAyBg6fpxGQv56c5`.
-- Commit sumber deployment aktif: `2c0fc05`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
+- Deployment Preview aktif: `tinitix-staging-22ze1xt3l-naskara-ai.vercel.app`, ID `dpl_N8pFkGz69DmrgEMwbdA5UtxoZzBa`.
+- Commit sumber deployment aktif: `adb7338`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
 - Riwayat smoke 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
@@ -139,3 +139,15 @@ Create Event sekarang menuju `/organizer/login`; route create-event lama redirec
 - Status paid menampilkan konfirmasi sukses, detail event, total, kanal pilihan, dan nomor pesanan. Simulasi tetap diberi keterangan tanpa uang ditagihkan.
 - Lihat Tiket menuju bagian QR. Download Tiket mengunduh PNG untuk satu tiket atau ZIP berisi PNG terpisah untuk banyak tiket. QR yang dibatalkan tidak disertakan. Unduhan per QR juga tersedia.
 - Commit 2c0fc05: build dan TypeScript Vercel lulus; Preview alias diperbarui. Uji browser dan pembacaan file unduhan belum dijalankan.
+
+## Backend langkah 1?3, 10 Oktober 2026
+
+- Commit aplikasi `adb7338`, deployment Preview `dpl_N8pFkGz69DmrgEMwbdA5UtxoZzBa`. Build dan TypeScript Vercel lulus. Tidak ada migrasi baru.
+- Pendaftaran `/organizer/register` membuat organisasi terpisah. Email harus diverifikasi sebelum API admin dapat dipakai. Akun pembeli terverifikasi dapat membuat organisasi setelah login; pengiriman bersamaan menghasilkan organisasi yang sama.
+- Pembatasan organisasi mencakup event, daftar/ekspor pesanan, laporan Excel, pembatalan tiket, check-in, dan antrean email Preview. Antrean Preview tidak lagi menampilkan email autentikasi atau email EO lain.
+- Expiry menggunakan transaksi dan mengunci order sebelum reservasi, konsisten dengan settlement; order yang sedang diproses dilewati dengan SKIP LOCKED.
+- PostgreSQL Neon, schema terisolasi: **22/22 tes transaksi lulus**. Termasuk tiga reservasi bersamaan untuk stok terakhir (satu berhasil), submit data berulang, settlement duplikat, expiry/checkout/settlement bersamaan, dan isolasi EO.
+- Suite lokal: **28 lulus, 1 dilewati** (tes isolasi koneksi khusus PostgreSQL). Dua alur browser dengan PostgreSQL nyata: **2/2 lulus**, yaitu pendaftaran/verifikasi/login EO serta checkout couple, unduhan ZIP, pembacaan QR dari file, check-in, scan ulang, dan laporan Excel.
+- Verifikasi EO di sini adalah verifikasi alamat email, bukan identitas bisnis/merchant. Keanggotaan petugas baru masih perlu disiapkan operator; undangan petugas mandiri belum tersedia.
+- Worker online, gateway nyata, dan pengujian kamera dua ponsel tetap di luar hasil ini.
+- Staging live pada 10 Oktober, 02.00–02.02 WIB: **15 pemeriksaan lulus**, mencakup PNG single, ZIP couple (QR dibaca dari file), scan serentak, stok terakhir, settlement ganda, proteksi kuota, pencarian, dan rekonsiliasi keenam sheet Excel. Hasil: 2 order paid, 3 tiket, total Rp50.852, 2 check-in. Event QA ditutup setelah pengujian. Bukti tersensor: `docs/staging-backend-2026-10-10.json`.

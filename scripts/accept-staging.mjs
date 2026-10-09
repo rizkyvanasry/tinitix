@@ -10,9 +10,9 @@ const {QRCodeReader,BinaryBitmap,HybridBinarizer,RGBLuminanceSource,DecodeHintTy
 
 const base=process.env.STAGING_URL;
 if(base!=='https://tinitix-staging-preview.vercel.app'||process.env.STAGING_QA_CONFIRM!=='run')throw Error('Explicit staging-only opt-in required');
-const adminEmail=process.env.STAGING_ADMIN_EMAIL,adminPassword=process.env.STAGING_ADMIN_PASSWORD,testerEmail=process.env.STAGING_TESTER_EMAIL,bypass=process.env.STAGING_BYPASS;
-if(!adminEmail||!adminPassword||!testerEmail||!bypass)throw Error('Staging credentials and tester email required');
-const headers={'x-vercel-protection-bypass':bypass,Origin:base};
+const adminEmail=process.env.STAGING_ADMIN_EMAIL,adminPassword=process.env.STAGING_ADMIN_PASSWORD,testerEmail=process.env.STAGING_TESTER_EMAIL,bypass=process.env.STAGING_BYPASS,cookie=process.env.STAGING_COOKIE;
+if(!adminEmail||!adminPassword||!testerEmail||(!bypass&&!cookie))throw Error('Staging credentials and tester email required');
+const headers={...(bypass?{'x-vercel-protection-bypass':bypass}:{}),Origin:base};
 const stamp=Date.now(),slug='qa-acceptance-'+stamp;
 const result={startedAt:new Date().toISOString(),slug,checks:[],eventId:null,orderIds:[],physicalPhones:'not-tested'};
 await fs.mkdir('.vercel/staging-qa',{recursive:true});
@@ -20,7 +20,7 @@ const output='.vercel/staging-qa/result-'+stamp+'.json';
 const browser=await chromium.launch({headless:true});
 let event,admin,stage='initialization';
 const record=(name,details={})=>{result.checks.push({name,passed:true,...details});console.log(JSON.stringify({check:name,passed:true,...details}));};
-async function context(){const c=await browser.newContext({baseURL:base,viewport:{width:1440,height:1000}});c.setDefaultTimeout(30000);await c.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue({headers:{...route.request().headers(),'x-vercel-protection-bypass':bypass}}):route.continue());return c;}
+async function context(){const c=await browser.newContext({baseURL:base,viewport:{width:1440,height:1000}});c.setDefaultTimeout(30000);if(cookie)await c.addCookies([{name:'_vercel_jwt',value:cookie,url:base,httpOnly:true,secure:true}]);if(bypass)await c.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue({headers:{...route.request().headers(),'x-vercel-protection-bypass':bypass}}):route.continue());return c;}
 async function call(c,path,data,extra={}){return data===undefined?c.request.get(base+path,{headers,...extra}):c.request.post(base+path,{headers,data,...extra});}
 async function body(r,expected=200){assert.equal(r.status(),expected,'Unexpected HTTP status '+r.url().split('?')[0]);return r.json();}
 async function saveEditor(page,editor){const responsePromise=page.waitForResponse(r=>r.url()===base+'/api/admin/events'&&r.request().method()==='POST');await editor.getByRole('button',{name:'Simpan event',exact:true}).click();const r=await responsePromise;if(r.status()!==200){const message=await r.json();throw Error('Save event HTTP '+r.status()+': '+message.error);}const e=await r.json();await expect(editor).toBeHidden();return e;}
