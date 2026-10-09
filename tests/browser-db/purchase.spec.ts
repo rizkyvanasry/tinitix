@@ -1,6 +1,11 @@
 import {test,expect} from '@playwright/test';
 import {ticketToken} from '../../lib/orders';
 import ExcelJS from 'exceljs';
+import JSZip from 'jszip';
+import {readFile} from 'node:fs/promises';
+import sharp from 'sharp';
+import zxing from '@zxing/library';
+const {QRCodeReader,BinaryBitmap,HybridBinarizer,RGBLuminanceSource}=zxing;
 
 test('admin publishes, guest buys couple, email link opens tickets, and check-in rejects reuse',async({page,browser,baseURL})=>{
  expect((await page.request.post('/api/auth/login',{headers:{Origin:'https://untrusted.example'},data:{email:'admin@example.test',password:'Browser-test-password-123'}})).status()).toBe(403);
@@ -40,6 +45,17 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const orderId=buyer.url().split('/').pop()!;
  await buyer.getByRole('button',{name:'Simulasikan pembayaran sukses'}).click();
  await expect(buyer.locator('.issued-ticket')).toHaveCount(2);
+ await expect(buyer.getByRole('heading',{name:'Pembayaran Sukses',exact:true})).toBeVisible();
+ await buyer.getByRole('link',{name:'Lihat Tiket',exact:true}).click();
+ await expect(buyer).toHaveURL(/#tiket-saya$/);
+ const [qrDownload]=await Promise.all([buyer.waitForEvent('download'),buyer.getByRole('button',{name:'Download Tiket',exact:true}).click()]);
+ const zip=await JSZip.loadAsync(await readFile((await qrDownload.path())!));
+ const files=Object.values(zip.files).filter(f=>!f.dir);expect(files).toHaveLength(2);
+ const qrCodes:string[]=[];
+ for(const file of files){const {data,info}=await sharp(await file.async('nodebuffer')).ensureAlpha().raw().toBuffer({resolveWithObject:true});const luminance=new Uint8ClampedArray(info.width*info.height);for(let i=0;i<luminance.length;i++)luminance[i]=Math.round(.299*data[i*4]+.587*data[i*4+1]+.114*data[i*4+2]);qrCodes.push(new QRCodeReader().decode(new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(luminance,info.width,info.height)))).getText());}
+ expect(new Set(qrCodes).size).toBe(2);
+ const [singleQr]=await Promise.all([buyer.waitForEvent('download'),buyer.getByRole('link',{name:'Download QR 1',exact:true}).click()]);
+ expect(singleQr.suggestedFilename()).toMatch(/\.png$/);
  const ticketIds=await buyer.locator('.issued-ticket > small').allTextContents();
  expect(new Set(await buyer.locator('.issued-ticket img').evaluateAll(images=>images.map(i=>i.getAttribute('src')))).size).toBe(2);
 
@@ -60,8 +76,8 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const csv=await page.request.get('/api/admin/orders/export?q='+orderId);
  expect(csv.status()).toBe(200);expect(await csv.text()).toContain(orderId);
  await page.goto('/check-in');
- for(const id of ticketIds){
-  await page.getByLabel('Atau masukkan kode dari QR').fill(ticketToken(id));
+ for(const code of qrCodes){
+  await page.getByLabel('Atau masukkan kode dari QR').fill(code);
   await page.getByRole('button',{name:'Validasi tiket'}).click();
   await expect(page.getByRole('status')).toContainText('Tiket valid.');
  }

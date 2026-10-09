@@ -62,7 +62,16 @@ export async function authorizeOrder(orderId:string,access?:string,user?:User|nu
  throw new AppError(403,'Buka pesanan melalui tautan aman di email atau masuk dengan akun terverifikasi.');
 }
 export async function exchangeAccess(raw:string){return transaction(async db=>{const r=await db.query("DELETE FROM order_access WHERE token_hash=$1 AND kind='link' AND expires_at>now() RETURNING order_id",[hash(raw)]);if(!r.rows[0])throw new AppError(400,'Tautan telah digunakan atau kedaluwarsa. Minta tautan baru.');return {id:r.rows[0].order_id,access:await accessGrant(db,r.rows[0].order_id)};});}
-export async function expireOrders(db:Db=database()){await db.query("UPDATE reservations SET state='released' WHERE state='active' AND expires_at<=now()");await db.query("UPDATE orders SET status='expired' WHERE status='pending' AND expires_at<=now()");}
+export async function expireOrders(){
+ // Match settlement's order-before-reservation lock order. Skip orders currently being paid.
+ return transaction(async db=>{
+  const expired=await db.query("SELECT id FROM orders WHERE status='pending' AND expires_at<=now() ORDER BY id FOR UPDATE SKIP LOCKED");
+  for(const order of expired.rows){
+   await db.query("UPDATE reservations SET state='released' WHERE order_id=$1 AND state='active'",[order.id]);
+   await db.query("UPDATE orders SET status='expired' WHERE id=$1",[order.id]);
+  }
+ });
+}
 export async function createPayment(orderId:string,access?:string,user?:User|null){return transaction(async db=>{await authorizeOrder(orderId,access,user,db);const order=(await db.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[orderId])).rows[0];if(!order.buyer_completed||order.status!=='pending'||new Date(order.expires_at)<=new Date())throw new AppError(409,'Pesanan tidak dapat dibayar.');const payment=await paymentAdapter().createPayment(orderId);await db.query('UPDATE orders SET payment_ref=$1 WHERE id=$2',[payment.reference,orderId]);return payment;});}
 export const ticketToken=(ticketId:string)=>sign('ticket:'+ticketId);
 export async function settlePayment(payment:PaymentEvent){

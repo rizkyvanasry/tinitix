@@ -1,7 +1,7 @@
 import {runMaintenance} from '@/lib/maintenance';
 import {NextRequest,NextResponse,after} from 'next/server';
 import {ZodError} from 'zod';
-import {currentUser,requireRole,login,register,requestAuthEmail,confirmAuth} from '@/lib/auth';
+import {currentUser,requireRole,login,register,registerOrganizer,createOrganizer,requestAuthEmail,confirmAuth} from '@/lib/auth';
 import {listEvents,getEvent,loadEvent} from '@/lib/catalog';
 import {completeBuyer,createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment} from '@/lib/orders';
 import {adminOverview,saveEvent,staffEvents,checkIn,assignStaff,cancelTicket} from '@/lib/admin';
@@ -51,7 +51,7 @@ async function handle(req:NextRequest){
   return json(await adminOrderPage(admin,req.nextUrl.searchParams.get('q')||'',page));
  }
  if(method==='GET'&&route==='admin/staff-events'){const staff=await requireRole(sid,['admin','staff']);return json(await staffEvents(staff));}
- if(method==='GET'&&route==='admin/outbox'){await requireRole(sid,['admin']);return json(await previewOutbox());}
+ if(method==='GET'&&route==='admin/outbox'){const admin=await requireRole(sid,['admin']);return json(await previewOutbox(admin.organizationId));}
  if(method==='GET'&&route==='admin/orders/export'){
   const admin=await requireRole(sid,['admin']),query=req.nextUrl.searchParams.get('q')||'';
   const encoder=new TextEncoder();let cursor:{createdAt:string;id:string}|undefined,complete=false;
@@ -86,6 +86,8 @@ async function handle(req:NextRequest){
  if(route.startsWith('auth/')||route==='orders/access-link')await rateLimit(route+':'+String(body.email||ip).toLowerCase(),5,300);
  if(route==='auth/login'){const result=await login(body);const response=json({message:'Berhasil masuk.'});response.cookies.set('tinitix_session',result.session,sessionOptions);return response;}
  if(route==='auth/logout'){if(sid)await database().query('DELETE FROM sessions WHERE token_hash=$1',[hash(sid)]);const response=json({message:'Keluar.'});response.cookies.delete('tinitix_session');return response;}
+ if(route==='auth/organizer-register'){const result=await registerOrganizer(body);after(processMailJobs);return json(result);}
+ if(route==='organizer/create'){const buyer=await requireRole(sid,['buyer','admin']);return json(await createOrganizer(body,buyer));}
  if(route==='auth/register'){const result=await register(body);after(processMailJobs);return json(result);}
  if(route==='auth/email'){const result=await requestAuthEmail(body);after(processMailJobs);return json(result);}
  if(route==='auth/confirm')return json(await confirmAuth(body));

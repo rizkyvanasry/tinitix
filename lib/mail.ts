@@ -18,5 +18,5 @@ export async function processMailJobs(){
  }
  return {sent,configured:true};
 }
-export async function previewOutbox(){if(isProduction())return [];const r=await database().query('SELECT id,recipient,payload,status,attempts FROM email_jobs ORDER BY created_at DESC LIMIT 30');return r.rows.map(j=>({...j,payload:JSON.parse(decrypt(j.payload))}));}
+export async function previewOutbox(organizationId:string){if(isProduction())return [];const r=await database().query('SELECT j.id,j.recipient,j.payload,j.status,j.attempts FROM email_jobs j JOIN orders o ON o.id=j.order_id JOIN events e ON e.id=o.event_id WHERE e.organization_id=$1 ORDER BY j.created_at DESC LIMIT 30',[organizationId]);return r.rows.map(j=>({...j,payload:JSON.parse(decrypt(j.payload))}));}
 export const orderEmail=(name:string,orderId:string,accessToken:string,eventName:string)=>({subject:'Tiket dan pesanan '+eventName+' — tinitix',text:`Halo ${name},\n\nBuka pesanan ${orderId} untuk melihat status pembayaran dan e-ticket beserta QR setiap orang.\n\n${appUrl()}/access#token=${accessToken}\n\nTautan berlaku 24 jam. Jangan bagikan tautan atau QR. Jika pembayaran belum terverifikasi, tiket belum diterbitkan.\n\ntinitix`});

@@ -17,3 +17,33 @@ export async function register(input:unknown){const body=z.object({name:z.string
 async function authEmail(db:Db,userId:string,email:string,kind:'verify'|'reset'){const raw=token();await db.query('INSERT INTO auth_tokens(token_hash,user_id,kind,expires_at) VALUES($1,$2,$3,$4)',[hash(raw),userId,kind,new Date(Date.now()+3600000)]);await enqueueMail(db,email,{subject:(kind==='verify'?'Verifikasi email':'Reset password')+' — tinitix',text:`Buka tautan berikut dalam 1 jam:\n${appUrl()}/auth/confirm#token=${raw}&kind=${kind}\nAbaikan jika Anda tidak meminta ini.`});}
 export async function requestAuthEmail(input:unknown){const body=z.object({email:emailSchema,kind:z.enum(['reset','verify'])}).parse(input);await transaction(async db=>{const r=await db.query('SELECT id FROM users WHERE email=$1',[body.email]);if(r.rows[0])await authEmail(db,r.rows[0].id,body.email,body.kind);});return {message:'Jika alamat terdaftar, tautan akan dikirim ke email tersebut.'};}
 export async function confirmAuth(input:unknown){const body=z.object({token:z.string().min(30).max(100),password:passwordSchema.optional()}).parse(input);return transaction(async db=>{const r=await db.query('DELETE FROM auth_tokens WHERE token_hash=$1 AND expires_at>now() RETURNING *',[hash(body.token)]);const t=r.rows[0];if(!t)throw new AppError(400,'Tautan tidak valid atau sudah kedaluwarsa.');if(t.kind==='reset'){if(!body.password)throw new AppError(400,'Masukkan password baru.');await db.query('UPDATE users SET password_hash=$1 WHERE id=$2',[passwordHash(body.password),t.user_id]);await db.query('DELETE FROM sessions WHERE user_id=$1',[t.user_id]);await db.query("DELETE FROM auth_tokens WHERE user_id=$1 AND kind='reset'",[t.user_id]);}else await db.query('UPDATE users SET verified=true WHERE id=$1',[t.user_id]);await audit(db,t.user_id,t.kind,t.user_id);return {message:t.kind==='reset'?'Password diperbarui. Silakan masuk.':'Email terverifikasi. Silakan masuk.'};});}
+
+// A verified buyer can create only their own organization; no client-provided role or tenant ID is accepted.
+export async function createOrganizer(input:unknown,user:User){
+ const body=z.object({organizationName:z.string().trim().min(2).max(120)}).parse(input);
+ return transaction(async db=>{
+  const member=(await db.query('SELECT m.*,u.verified FROM memberships m JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 FOR UPDATE OF m',[user.id])).rows[0];
+  if(!member?.verified)throw new AppError(403,'Verifikasi email sebelum membuat organisasi.');
+  if(member.role==='admin')return {organizationId:member.organization_id};
+  if(member.role!=='buyer')throw new AppError(409,'Akun petugas sudah terhubung ke organisasi. Gunakan akun lain untuk membuat EO.');
+  const organizationId=id('org');
+  await db.query('INSERT INTO organizations(id,name) VALUES($1,$2)',[organizationId,body.organizationName]);
+  await db.query("UPDATE memberships SET organization_id=$2,role='admin' WHERE user_id=$1",[user.id,organizationId]);
+  await audit(db,user.id,'organizer_created',organizationId);
+  return {organizationId};
+ });
+}
+export async function registerOrganizer(input:unknown){
+ const body=z.object({name:z.string().trim().min(2).max(100),organizationName:z.string().trim().min(2).max(120),email:emailSchema,password:passwordSchema}).parse(input);
+ await transaction(async db=>{
+  const userId=id('user');
+  const inserted=await db.query('INSERT INTO users(id,email,name,password_hash) VALUES($1,$2,$3,$4) ON CONFLICT(email) DO NOTHING RETURNING id',[userId,body.email,body.name,passwordHash(body.password)]);
+  if(!inserted.rows.length)return;
+  const organizationId=id('org');
+  await db.query('INSERT INTO organizations(id,name) VALUES($1,$2)',[organizationId,body.organizationName]);
+  await db.query("INSERT INTO memberships(user_id,organization_id,role) VALUES($1,$2,'admin')",[userId,organizationId]);
+  await authEmail(db,userId,body.email,'verify');
+  await audit(db,userId,'organizer_registered',organizationId);
+ });
+ return {message:'Jika email dapat didaftarkan, tautan verifikasi dikirim. Setelah verifikasi, masuk melalui Login Organizer. Jika sudah punya akun, masuk terlebih dahulu.'};
+}
