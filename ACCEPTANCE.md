@@ -34,8 +34,8 @@ Dependency: lockfile diperbarui ke Next.js 16.3.6 dan patch transitive; npm audi
 ## Deployment yang aktif
 
 - Alias staging: https://tinitix-staging-preview.vercel.app
-- Deployment Preview aktif: `tinitix-staging-7tjcwmarn-naskara-ai.vercel.app`, ID `dpl_86eu5wFLR2Sb3uLaA2ATm8heZwjH`.
-- Commit sumber deployment aktif: `135cc82`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
+- Deployment Preview aktif: `tinitix-staging-gqunpjl6y-naskara-ai.vercel.app`, ID `dpl_GeZMJLWUGmevBAyBg6fpxGQv56c5`.
+- Commit sumber deployment aktif: `2c0fc05`. Build dan TypeScript Vercel berhasil; alias diperbarui 9 Oktober untuk reservasi sebelum data pembeli, timer server, pajak, dan biaya layanan. Migrasi `004_buyer_details` serta `005_checkout_holds_fees` diterapkan. Pengujian browser lengkap sebelumnya (00.59?01.01 WIB) memakai commit `1cdc78b`; hasil tersebut tidak dianggap pengujian ulang alur baru.
 - Riwayat smoke 7 Oktober 2026, sekitar 23.12 WIB: Vercel Ready / Preview; login admin HTTP 200; katalog HTTP 200 dengan enam event; unduhan laporan HTTP 200 dan workbook terbaca dengan keenam sheet.
 - Event yang dipakai untuk smoke laporan: `event_da88b1fb469c3a897c5198d6`. Workbook saat verifikasi berisi satu order dan satu tiket. Pemeriksaan ini tidak membuat pembelian atau mengubah data pelanggan.
 - Database mengonfirmasi `001_initial.sql`, `002_order_listing.sql`, dan `003_report_payments.sql` sudah diterapkan. Tidak perlu menerapkan ulang migrasi 003.
@@ -133,3 +133,9 @@ Create Event sekarang menuju `/organizer/login`; route create-event lama redirec
 - Halaman /organizer/services menggunakan layout editorial berbahasa Indonesia untuk halaman event, ticketing, reservasi, check-in, laporan Excel, dan rincian biaya.
 - CTA Get Started Now menuju /organizer/login. Pembayaran nyata tetap belum aktif dan dijelaskan sebagai simulasi.
 - Commit aplikasi 135cc82 berhasil build dan pemeriksaan TypeScript di Vercel Preview. Alias staging diperbarui. Pengujian browser/visual tidak dijalankan untuk perubahan ini.
+
+## Pembayaran sukses dan unduhan QR, 10 Oktober 2026
+
+- Status paid menampilkan konfirmasi sukses, detail event, total, kanal pilihan, dan nomor pesanan. Simulasi tetap diberi keterangan tanpa uang ditagihkan.
+- Lihat Tiket menuju bagian QR. Download Tiket mengunduh PNG untuk satu tiket atau ZIP berisi PNG terpisah untuk banyak tiket. QR yang dibatalkan tidak disertakan. Unduhan per QR juga tersedia.
+- Commit 2c0fc05: build dan TypeScript Vercel lulus; Preview alias diperbarui. Uji browser dan pembacaan file unduhan belum dijalankan.
