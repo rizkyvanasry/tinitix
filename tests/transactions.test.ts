@@ -34,7 +34,7 @@ async function pay(order:{id:string;access:string},eventId=key()){
  const payload={id:eventId,orderId:order.id,reference:p.reference,merchant:'tinitix-simulation' as const,amount:o.total,currency:'IDR' as const,status:'paid' as const};
  return {payload,result:await settlePayment(payload)};
 }
-before(async()=>{await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/004_buyer_details.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/005_checkout_holds_fees.sql',import.meta.url),'utf8'));});
+before(async()=>{await pg.exec(await readFile(new URL('../db/migrations/001_initial.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/004_buyer_details.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/005_checkout_holds_fees.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/006_organizer_profile.sql',import.meta.url),'utf8'));await pg.exec(await readFile(new URL('../db/migrations/007_organizer_details.sql',import.meta.url),'utf8'));});
 after(async()=>{await pg.close();});
 beforeEach(async()=>{
  Object.assign(process.env,{NODE_ENV:'test'});delete process.env.VERCEL_ENV;delete process.env.RESEND_API_KEY;delete process.env.EMAIL_FROM;
@@ -121,16 +121,31 @@ it('checkout, duplicate settlement and expiry racing preserve one unit and one t
 
 it('organizer registration is isolated and requires email verification',async()=>{
  const {registerOrganizer,createOrganizer,requireRole}=await import('../lib/auth');
- await registerOrganizer({name:'EO Baru',organizationName:'Independent EO',email:'eo@example.test',password:'organizer-password-123',organizationId:'tinitix',role:'admin'});
+ const profile={firstName:'EO',lastName:'Baru',phone:'+6285719593780',birthDate:'2000-07-30',gender:'male' as const};
+ await assert.rejects(registerOrganizer({...profile,birthDate:'2025-02-30',organizationName:'Invalid EO',email:'invalid@example.test',password:'organizer-password-123'}));
+ await registerOrganizer({...profile,organizationName:'Independent EO',email:'eo@example.test',password:'organizer-password-123',organizationId:'tinitix',role:'admin'});
+ const saved=(await db.query("SELECT first_name,last_name,phone,birth_date::text AS birth_date,gender FROM users WHERE email='eo@example.test'")).rows[0];
+ assert.deepEqual(saved,{first_name:'EO',last_name:'Baru',phone:'+6285719593780',birth_date:'2000-07-30',gender:'male'});
  const session=(await login({email:'eo@example.test',password:'organizer-password-123'})).session;
  await assert.rejects(requireRole(session,['admin']),/Akses/);
  const mail=JSON.parse(decrypt((await db.query("SELECT payload FROM email_jobs WHERE recipient='eo@example.test'")).rows[0].payload));
  await confirmAuth({token:mail.text.match(/#token=([^&\s]+)/)[1]});
+ const pending=(await currentUser(session))!;
+ assert.equal(pending.role,'buyer');
+ await assert.rejects(requireRole(session,['admin']));
+ const details={organizationName:'Independent EO',organizerType:'individual',slug:'independent-eo',phone:profile.phone,newsletter:false,accepted:true};
+ await assert.rejects(createOrganizer({...details,accepted:false},pending));
+ await createOrganizer(details,pending);
  const eo=await requireRole(session,['admin']);assert.notEqual(eo.organizationId,admin.organizationId);
  const {adminOverview,staffEvents,cancelTicket}=await import('../lib/admin');
  const {eventReport}=await import('../lib/event-report');
  const {previewOutbox}=await import('../lib/mail');
  const own=await saveEvent({...event,id:undefined,slug:'independent-event'},eo);
+ const {listOrganizerEvents,getOrganizerEvent}=await import('../lib/organizer-events');
+ assert.deepEqual((await listOrganizerEvents(eo)).map(item=>item.id),[own.id]);
+ assert.equal((await getOrganizerEvent(own.id,eo))?.name,own.name);
+ assert.equal(await getOrganizerEvent(event.id,eo),null);
+ await assert.rejects(listOrganizerEvents({...eo,verified:false}));
  assert.equal(own.organizationId,eo.organizationId);
  assert.deepEqual((await adminOverview(eo)).events.map(e=>e.id),[own.id]);
  assert.deepEqual((await staffEvents(eo)).map(e=>e.id),[own.id]);
@@ -146,14 +161,22 @@ it('organizer registration is isolated and requires email verification',async()=
  await assert.rejects(checkIn({eventId:event.id,token:ticketToken(ticket.id)},eo));
  await assert.rejects(cancelTicket({ticketId:ticket.id,reason:'Cross tenant cancellation'},eo));
  await assert.rejects(assignStaff({email:admin.email,eventIds:[own.id]},eo));
+ const personalOrder=await createOrder({...purchase(),buyerName:eo.name,buyerEmail:eo.email},key());
+ await pay(personalOrder);
+ const personalTicket=await getOrder(personalOrder.id,undefined,eo);
+ assert.equal(personalTicket.status,'paid');
+ assert.equal(personalTicket.tickets.length,1);
+ assert.equal((await adminOrderPage(eo,'',1)).total,0);
  await register({name:'Buyer EO',email:'buyer-eo@example.test',password:'buyer-eo-password-123'});
  const buyerSession=(await login({email:'buyer-eo@example.test',password:'buyer-eo-password-123'})).session;
- await assert.rejects(createOrganizer({organizationName:'New EO'},(await currentUser(buyerSession))!));
+ await assert.rejects(createOrganizer({...details,organizationName:'New EO',slug:'new-eo'},(await currentUser(buyerSession))!));
  await db.query("UPDATE users SET verified=true WHERE email='buyer-eo@example.test'");
  const buyer=(await currentUser(buyerSession))!;
- const upgrades=await Promise.all([createOrganizer({organizationName:'New EO'},buyer),createOrganizer({organizationName:'New EO'},buyer)]);
+ const upgrades=await Promise.all([createOrganizer({...details,organizationName:'New EO',slug:'new-eo'},buyer),createOrganizer({...details,organizationName:'New EO',slug:'new-eo'},buyer)]);
  assert.equal(upgrades[0].organizationId,upgrades[1].organizationId);
  assert.equal((await currentUser(buyerSession))?.role,'admin');
+ assert.equal((await db.query("SELECT phone FROM organizations WHERE slug='new-eo'")).rows[0].phone,profile.phone);
+ assert.equal((await createOrganizer({organizationName:'Ignored retry'},(await currentUser(buyerSession))!)).organizationId,upgrades[0].organizationId);
 });
 
 it('reservation-first race, repeated buyer submit and payments create one order and ticket',async()=>{

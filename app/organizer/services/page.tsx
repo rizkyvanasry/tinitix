@@ -45,6 +45,6 @@ export default function Services() {
       <div className="services-fee-example"><span>CONTOH PERHITUNGAN</span><dl><div><dt>Harga tiket</dt><dd>Rp100.000</dd></div><div><dt>Pajak 10%</dt><dd>Rp10.000</dd></div><div><dt>Biaya layanan 3%</dt><dd>Rp3.000</dd></div><div className="services-fee-total"><dt>Total pesanan</dt><dd>Rp113.000</dd></div></dl><p>Pajak dan biaya layanan pada contoh dihitung dari harga tiket. Persentasenya dapat diatur oleh organizer.</p></div>
     </section>
 
-    <section className="services-wrap services-closing"><span className="services-label">EVENT BERIKUTNYA DIMULAI DI SINI</span><h2>Bawa ide lo<br />ke depan penonton.</h2><p>Masuk ke akun organizer untuk mulai menyiapkan event lo bersama Tinitix.</p><Link href="/organizer/login" className="button">Get Started Now <ArrowUpRight size={21} /></Link><Link href="/organizer/help-center" className="services-link">Butuh panduan? Buka pusat bantuan</Link></section>
+    <section className="services-wrap services-closing"><span className="services-label">EVENT BERIKUTNYA DIMULAI DI SINI</span><h2>Bawa ide lo<br />ke depan penonton.</h2><p>Masuk ke akun organizer untuk mulai menyiapkan event lo bersama Tinitix.</p><Link href="/organizer/create-event" className="button">Get Started Now <ArrowUpRight size={21} /></Link><Link href="/organizer/help-center" className="services-link">Butuh panduan? Buka pusat bantuan</Link></section>
   </div>;
 }

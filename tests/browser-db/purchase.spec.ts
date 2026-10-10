@@ -13,8 +13,9 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await page.getByLabel('Alamat email',{exact:true}).fill('admin@example.test');
  await page.getByLabel('Password',{exact:true}).fill('Browser-test-password-123');
  await page.getByRole('button',{name:'Masuk',exact:true}).click();
- await expect(page.getByRole('heading',{name:'Semua dalam kendali.'})).toBeVisible();
- await page.getByRole('button',{name:'Buat event',exact:true}).click();
+ await page.locator('.organizer-home-card').click();
+ await expect(page.getByRole('heading',{name:'Acara saya'})).toBeVisible();
+ await page.getByRole('button',{name:'Tambah acara',exact:true}).first().click();
  const editor=page.getByRole('dialog');
  await editor.getByLabel('Nama event',{exact:true}).fill('Browser Couple Event');
  await editor.getByLabel('Slug URL').fill('browser-couple-event');
@@ -29,6 +30,10 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await editor.getByRole('combobox',{name:/^Status/}).selectOption('published');
  await editor.getByRole('button',{name:'Simpan event',exact:true}).click();
  await expect(editor).toBeHidden();
+ await page.getByRole('searchbox',{name:'Cari nama acara'}).fill('Browser Couple');
+ await page.getByRole('link',{name:/Browser Couple Event/}).click();
+ await expect(page.getByRole('heading',{name:'Browser Couple Event',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Laporan penjualan',exact:true})).toBeVisible();
 
  const guest=await browser.newContext({baseURL}),buyer=await guest.newPage();
  await buyer.goto('/events/browser-couple-event/tickets');

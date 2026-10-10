@@ -12,7 +12,7 @@ test('spotlight advances automatically and can be paused',async({page})=>{
  await page.clock.runFor(6000);
  await expect(active).toContainText('Soundscape Festival');
  await page.locator('.organizer-promo').click();
- await expect(page.getByRole('heading',{name:'Dari tiket pertama sampai pintu venue.'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/Ide besar lo/})).toBeVisible();
 });
 test('catalog, search, responsive layout and detail',async({page},testInfo)=>{
  const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));

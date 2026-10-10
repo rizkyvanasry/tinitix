@@ -1,0 +1,24 @@
+.organizer-register-page{min-height:calc(100svh - 88px);padding:50px 24px 100px;background:#fff}
+.organizer-register-wrap{width:min(575px,100%);margin:0 auto}
+.organizer-register-wrap>.eyebrow{display:block;font-size:11px;letter-spacing:2px;font-weight:600;margin-bottom:9px}
+.organizer-register-wrap h1{font-family:'IBM Plex Sans',sans-serif;font-size:clamp(42px,4.6vw,60px);font-weight:600;line-height:1.1;letter-spacing:-2px;margin:0 0 20px;color:#404246}
+.organizer-register-intro{font-size:15px;line-height:1.6;color:#66707a;margin:0 0 34px}
+.organizer-register-form{display:grid;gap:25px}
+.organizer-register-form .field,.organizer-register-phone>.field{font-size:19px;font-weight:400;color:#434a50;line-height:1.35}
+.organizer-register-form .field input,.organizer-register-form .field select{display:block;width:100%;height:64px;margin-top:10px;border:1px solid #d9dcdf;border-radius:15px;padding:0 20px;background:#fff;color:#343b44;font-size:20px;font-weight:400}
+.organizer-register-form .field input::placeholder{color:#9ba1a7}
+.organizer-register-form .field select{cursor:pointer}
+.organizer-register-form .field input:focus,.organizer-register-form .field select:focus,.organizer-register-phone-control:focus-within{outline:2px solid var(--blue);outline-offset:2px}
+.organizer-register-form .field small,.organizer-register-phone small{display:block;margin-top:7px;font-size:12px;color:#727981}
+.organizer-register-phone-control{display:flex;align-items:center;height:64px;margin-top:10px;border:1px solid #d9dcdf;border-radius:15px;overflow:hidden}
+.organizer-register-phone-control select{width:104px;flex:none;padding:0 12px 0 19px;height:100%;border:0;border-right:1px solid #e5e7e9;border-radius:0;background:#fff;font-size:19px}
+.organizer-register-phone-control input{flex:1;width:100%;min-width:0;height:100%;min-height:0;margin:0;border:0;border-radius:0;padding:0 19px;font-size:20px;outline:none}
+.organizer-register-phone-control input:focus,.organizer-register-phone-control select:focus{outline:none}
+.organizer-register-consent{display:flex;align-items:flex-start;gap:12px;color:#59626b;font-size:14px;line-height:1.5;cursor:pointer}
+.organizer-register-consent input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--blue)}
+.organizer-register-consent a,.organizer-register-login a{color:var(--blue);font-weight:600}
+.organizer-register-form>.button{min-height:58px;font-size:16px;border-radius:8px}
+.organizer-register-login{font-size:14px;text-align:center;color:#66707a;margin-top:29px}
+.organizer-register-notice{padding:18px 20px;margin:20px 0;border:1px solid #d9e2ff;border-radius:10px;background:#f5f7ff;color:#34405f;font-size:14px;line-height:1.6}
+.organizer-register-notice p{margin:0 0 12px}.organizer-register-notice p:last-child{margin:12px 0 0}
+@media(max-width:680px){.organizer-register-page{padding:36px 22px 72px}.organizer-register-wrap h1{letter-spacing:-1px}.organizer-register-form{gap:22px}.organizer-register-form .field,.organizer-register-phone>.field{font-size:16px}.organizer-register-form .field input,.organizer-register-form .field select,.organizer-register-phone-control{height:56px;font-size:16px;border-radius:11px}.organizer-register-phone-control input,.organizer-register-phone-control select{font-size:16px}.organizer-register-phone-control select{width:94px}}

@@ -1,4 +1,11 @@
-import Link from 'next/link';
-import {ArrowUpRight} from 'lucide-react';
-export const metadata={title:'Untuk Event Organizer | tinitix'};
-export default function OrganizerPage(){return <article className="container article-page organizer-page"><span className="eyebrow blue-text">TINITIX UNTUK ORGANIZER</span><h1>Dari tiket pertama sampai pintu venue.</h1><p>Kelola event, penjualan tiket, dan check-in dalam satu tempat. Fokus pada acaranya, dengan informasi pesanan yang bisa diakses tim.</p><h2>Publikasikan eventmu</h2><p>Atur poster, lokasi, jadwal, kategori tiket, harga, serta kuota penjualan melalui dashboard admin.</p><h2>Tiket single dan couple</h2><p>Pembeli bisa memesan tanpa akun. Paket couple menghasilkan dua tiket dengan QR terpisah sehingga pengunjung bisa datang sendiri-sendiri.</p><h2>Check-in untuk tim lapangan</h2><p>Tugaskan petugas ke event dan pindai QR saat pengunjung datang. QR yang sudah dipakai akan ditolak pada pemindaian berikutnya.</p><h2>Lihat pesanan dan ekspor data</h2><p>Cari pesanan, pantau status pembayaran, dan unduh data untuk kebutuhan operasional event.</p><p>Saat ini Tinitix berada dalam tahap uji coba. Pembayaran masih menggunakan simulasi; pengiriman email dan pembayaran nyata sedang disiapkan.</p><Link className="text-link" href="/admin">Buka dashboard admin <ArrowUpRight size={18}/></Link></article>;}
+﻿import {organizerSession} from '@/lib/organizer-session';
+import {database} from '@/lib/db';
+import {appUrl} from '@/lib/config';
+import {OrganizerHome} from '@/components/organizer-home';
+import './organizer-home.css';
+export const metadata={title:'Organizer saya'};
+export default async function OrganizerPage(){
+ const user=await organizerSession(false);
+ const organization=user.role==='admin'?(await database().query('SELECT id,name,slug,organizer_type FROM organizations WHERE id=$1',[user.organizationId])).rows[0]:null;
+ return <OrganizerHome organization={organization?{id:organization.id,name:organization.name,slug:organization.slug,organizer_type:organization.organizer_type}:null} urlPrefix={appUrl()+'/o/'}/>;
+}

@@ -44,6 +44,7 @@ async function handle(req:NextRequest){
   const bytes=await reportWorkbook(report);
   return new NextResponse(bytes,{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="export_report_'+report.event.id.replace(/[^a-zA-Z0-9_-]/g,'')+'.xlsx"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
  }
+ if(method==='GET'&&route==='admin/live'){const admin=await requireRole(sid,['admin']);const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
  if(method==='GET'&&route==='admin/orders'){
   const admin=await requireRole(sid,['admin']);

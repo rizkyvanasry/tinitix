@@ -1,6 +1,9 @@
-import {AdminDashboard} from '@/components/admin-dashboard';
-import {hasDatabase} from '@/lib/config';
-import {listEvents} from '@/lib/catalog';
-import './admin.css';
+import {redirect} from 'next/navigation';
+import {organizerSession} from '@/lib/organizer-session';
+import {listOrganizerEvents} from '@/lib/organizer-events';
 export const dynamic='force-dynamic';
-export default async function Page(){return <AdminDashboard preview={hasDatabase()?undefined:await listEvents()}/>;}
+export default async function Page(){
+ const user=await organizerSession();
+ const events=await listOrganizerEvents(user);
+ redirect(events.length===1?'/organizer/events/'+events[0].id:'/organizer/events');
+}

@@ -2,13 +2,19 @@ import {test,expect} from '@playwright/test';
 import {Pool} from 'pg';
 import {decrypt} from '../../lib/security';
 test('organizer registers, verifies email, logs in and owns an empty dashboard',async({page,baseURL})=>{
+ await page.goto('/organizer/create-event');
+ await expect(page).toHaveURL(/\/organizer\/login/);
  await page.goto('/organizer/register');
- await page.getByLabel('Nama lengkap',{exact:true}).fill('Organizer Browser');
- await page.getByLabel('Alamat email',{exact:true}).fill('organizer-browser@example.test');
+ await page.getByLabel('Nama Depan',{exact:true}).fill('Organizer');
+ await page.getByLabel('Nama Belakang',{exact:true}).fill('Browser');
+ await page.getByLabel('Nomor Telepon',{exact:true}).fill('85719593780');
+ await page.getByLabel('Tanggal Lahir',{exact:true}).fill('2000-07-30');
+ await page.getByLabel('Jenis Kelamin',{exact:true}).selectOption('male');
+ await page.getByLabel('Alamat Email',{exact:true}).fill('organizer-browser@example.test');
  await page.getByLabel('Password',{exact:false}).fill('Organizer-browser-password-123');
- await page.getByLabel('Nama organisasi',{exact:true}).fill('Browser Independent EO');
+
  await page.getByRole('checkbox').check();
- await page.getByRole('button',{name:'Daftar organizer',exact:true}).click();
+ await page.getByRole('button',{name:'Buat Akun Organizer',exact:true}).click();
  await expect(page.getByRole('status')).toContainText('tautan verifikasi');
  const db=new Pool({connectionString:process.env.DATABASE_URL,max:1});
  try{
@@ -22,8 +28,27 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
   expect((await page.request.get('/api/admin/events')).status()).toBe(403);
   expect((await page.request.post('/api/auth/confirm',{headers:{Origin:baseURL!},data:{token}})).status()).toBe(200);
   await page.getByRole('button',{name:'Log In',exact:true}).click();
-  await expect(page).toHaveURL(/\/admin\?create=event/);
+  await expect(page).toHaveURL(/\/organizer$/);
+  expect((await page.request.get('/api/admin/events')).status()).toBe(403);
+  await page.getByRole('button',{name:'Create Organizer',exact:true}).click();
+  await page.getByLabel('Organizer Name').fill('Browser Independent EO');
+  await page.getByLabel('Organizer page URL').fill('browser-independent-eo');
+  await page.getByLabel('Phone Number').fill('85719593780');
+  await page.getByRole('checkbox',{name:/Saya telah membaca/}).check();
+  await page.getByRole('button',{name:'Create Organizer',exact:true}).last().click();
+  await expect(page).toHaveURL(/\/organizer$/);
+  await page.getByRole('link',{name:/Browser Independent EO/}).click();
+  await expect(page).toHaveURL(/\/organizer\/events$/);
+  await expect(page.getByRole('heading',{name:'Acara saya'})).toBeVisible();
+  await page.getByRole('button',{name:'Tambah acara',exact:true}).first().click();
   await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button',{name:'Tutup editor'}).click();
+  await page.goto('/organizer/create-event');
+  await expect(page).toHaveURL(/\/organizer$/);
+  await page.getByRole('link',{name:'Tiket Saya',exact:true}).click();
+  await expect(page).toHaveURL(/\/account$/);
+  await page.getByRole('link',{name:'Event Organizer',exact:true}).click();
+  await expect(page).toHaveURL(/\/organizer$/);
   const overview=await (await page.request.get('/api/admin/events')).json();expect(overview.events).toEqual([]);
   const outbox=await (await page.request.get('/api/admin/outbox')).json();expect(outbox).toEqual([]);
  }finally{await db.end();}
