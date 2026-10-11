@@ -45,6 +45,7 @@ async function handle(req:NextRequest){
   return new NextResponse(bytes,{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="export_report_'+report.event.id.replace(/[^a-zA-Z0-9_-]/g,'')+'.xlsx"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
  }
  if(method==='GET'&&route==='admin/live'){const admin=await requireRole(sid,['admin']);const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
+ if(method==='GET'&&route==='admin/staff'){const actor=await requireRole(sid,['admin']);const {listStaff}=await import('@/lib/staff-invitations');return json(await listStaff(actor));}
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
  if(method==='GET'&&route==='admin/orders'){
   const admin=await requireRole(sid,['admin']);
@@ -85,6 +86,7 @@ async function handle(req:NextRequest){
  const ip=req.headers.get('x-vercel-forwarded-for')||req.headers.get('x-forwarded-for')||'local';
  await rateLimit('ip:'+ip,100,60);
  if(route.startsWith('auth/')||route==='orders/access-link')await rateLimit(route+':'+String(body.email||ip).toLowerCase(),5,300);
+ if(route==='staff/accept'){const actor=await requireRole(sid,['buyer','staff','admin']);const {acceptStaffInvitation}=await import('@/lib/staff-invitations');return json(await acceptStaffInvitation(body,actor));}
  if(route==='auth/login'){const result=await login(body);const response=json({message:'Berhasil masuk.'});response.cookies.set('tinitix_session',result.session,sessionOptions);return response;}
  if(route==='auth/logout'){if(sid)await database().query('DELETE FROM sessions WHERE token_hash=$1',[hash(sid)]);const response=json({message:'Keluar.'});response.cookies.delete('tinitix_session');return response;}
  if(route==='auth/organizer-register'){const result=await registerOrganizer(body);after(processMailJobs);return json(result);}
@@ -110,6 +112,9 @@ async function handle(req:NextRequest){
  }
  if(route.startsWith('admin/')){
   const actor=await requireRole(sid,route==='admin/check-ins'?['admin','staff']:['admin']);
+  if(route==='admin/staff/invite'){const {inviteStaff}=await import('@/lib/staff-invitations');await rateLimit('staff-invite:'+actor.id,20,3600);const result=await inviteStaff(body,actor);after(processMailJobs);return json(result);}
+  if(route==='admin/staff/revoke'){const {revokeStaff}=await import('@/lib/staff-invitations');return json(await revokeStaff(body,actor));}
+  if(route==='admin/staff/cancel'){const {cancelStaffInvitation}=await import('@/lib/staff-invitations');return json(await cancelStaffInvitation(body,actor));}
   if(route==='admin/check-ins')return json(await checkIn(body,actor));
   if(route==='admin/events')return json(await saveEvent(body,actor));
   if(route==='admin/staff')return json(await assignStaff(body,actor));

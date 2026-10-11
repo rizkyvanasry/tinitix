@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import {readFile} from 'node:fs/promises';
 import sharp from 'sharp';
 import zxing from '@zxing/library';
-const {QRCodeReader,BinaryBitmap,HybridBinarizer,RGBLuminanceSource}=zxing;
+const {QRCodeReader,BinaryBitmap,HybridBinarizer,RGBLuminanceSource,DecodeHintType}=zxing;
 
 test('admin publishes, guest buys couple, email link opens tickets, and check-in rejects reuse',async({page,browser,baseURL})=>{
  expect((await page.request.post('/api/auth/login',{headers:{Origin:'https://untrusted.example'},data:{email:'admin@example.test',password:'Browser-test-password-123'}})).status()).toBe(403);
@@ -32,8 +32,8 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await expect(editor).toBeHidden();
  await page.getByRole('searchbox',{name:'Cari nama acara'}).fill('Browser Couple');
  await page.getByRole('link',{name:/Browser Couple Event/}).click();
- await expect(page.getByRole('heading',{name:'Browser Couple Event',exact:true})).toBeVisible();
- await expect(page.getByRole('heading',{name:'Laporan penjualan',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Overview',exact:true})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Pendapatan tiket (IDR)',exact:true})).toBeVisible();
 
  const guest=await browser.newContext({baseURL}),buyer=await guest.newPage();
  await buyer.goto('/events/browser-couple-event/tickets');
@@ -57,7 +57,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const zip=await JSZip.loadAsync(await readFile((await qrDownload.path())!));
  const files=Object.values(zip.files).filter(f=>!f.dir);expect(files).toHaveLength(2);
  const qrCodes:string[]=[];
- for(const file of files){const {data,info}=await sharp(await file.async('nodebuffer')).ensureAlpha().raw().toBuffer({resolveWithObject:true});const luminance=new Uint8ClampedArray(info.width*info.height);for(let i=0;i<luminance.length;i++)luminance[i]=Math.round(.299*data[i*4]+.587*data[i*4+1]+.114*data[i*4+2]);qrCodes.push(new QRCodeReader().decode(new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(luminance,info.width,info.height)))).getText());}
+ for(const file of files){const {data,info}=await sharp(await file.async('nodebuffer')).ensureAlpha().raw().toBuffer({resolveWithObject:true});const luminance=new Uint8ClampedArray(info.width*info.height);for(let i=0;i<luminance.length;i++)luminance[i]=Math.round(.299*data[i*4]+.587*data[i*4+1]+.114*data[i*4+2]);qrCodes.push(new QRCodeReader().decode(new BinaryBitmap(new HybridBinarizer(new RGBLuminanceSource(luminance,info.width,info.height))),new Map([[DecodeHintType.PURE_BARCODE,true]])).getText());}
  expect(new Set(qrCodes).size).toBe(2);
  const [singleQr]=await Promise.all([buyer.waitForEvent('download'),buyer.getByRole('link',{name:'Download QR 1',exact:true}).click()]);
  expect(singleQr.suggestedFilename()).toMatch(/\.png$/);
@@ -75,6 +75,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const outsider=await browser.newContext({baseURL});
  expect((await outsider.request.get('/api/orders/'+orderId)).status()).toBe(403);
 
+ await page.goto('/admin/tools');
  await page.getByRole('button',{name:'Pesanan',exact:true}).click();
  await page.getByLabel('Cari pesanan').fill(orderId);
  await expect(page.locator('tbody tr')).toHaveCount(1);
@@ -89,7 +90,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await page.getByLabel('Atau masukkan kode dari QR').fill(ticketToken(ticketIds[0]));
  await page.getByRole('button',{name:'Validasi tiket'}).click();
  await expect(page.getByRole('status')).toContainText('Tiket sudah digunakan.');
- await page.goto('/admin');
+ await page.goto('/admin/tools');
  await page.getByRole('button',{name:'Laporan Excel',exact:true}).click();
  await expect(page.getByRole('button',{name:'Summary',exact:true})).toBeVisible();
  const eventId=await page.getByLabel('Event laporan').inputValue();

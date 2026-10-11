@@ -1,7 +1,8 @@
 import {test,expect} from '@playwright/test';
 import {Pool} from 'pg';
 import {decrypt} from '../../lib/security';
-test('organizer registers, verifies email, logs in and owns an empty dashboard',async({page,baseURL})=>{
+import ExcelJS from 'exceljs';
+test('organizer registers, verifies email, logs in and owns an empty dashboard',async({page,browser,baseURL})=>{
  await page.goto('/organizer/create-event');
  await expect(page).toHaveURL(/\/organizer\/login/);
  await page.goto('/organizer/register');
@@ -9,7 +10,7 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
  await page.getByLabel('Nama Belakang',{exact:true}).fill('Browser');
  await page.getByLabel('Nomor Telepon',{exact:true}).fill('85719593780');
  await page.getByLabel('Tanggal Lahir',{exact:true}).fill('2000-07-30');
- await page.getByLabel('Jenis Kelamin',{exact:true}).selectOption('male');
+ await page.locator('select[name=gender]').selectOption('male');
  await page.getByLabel('Alamat Email',{exact:true}).fill('organizer-browser@example.test');
  await page.getByLabel('Password',{exact:false}).fill('Organizer-browser-password-123');
 
@@ -51,5 +52,47 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
   await expect(page).toHaveURL(/\/organizer$/);
   const overview=await (await page.request.get('/api/admin/events')).json();expect(overview.events).toEqual([]);
   const outbox=await (await page.request.get('/api/admin/outbox')).json();expect(outbox).toEqual([]);
+  await page.goto('/organizer/events');
+  await page.getByRole('button',{name:'Tambah acara',exact:true}).first().click();
+  const editor=page.getByRole('dialog');
+  await editor.getByLabel('Nama event',{exact:true}).fill('New Organizer Live Event');
+  await editor.getByLabel('Slug URL').fill('new-organizer-live-event');
+  await editor.getByLabel('Nama venue').fill('Test Venue');
+  await editor.getByLabel('Alamat lengkap').fill('Jalan Test 123');
+  await editor.getByLabel('Deskripsi').fill('Event khusus pengujian alur organizer sampai laporan.');
+  await editor.getByLabel('Syarat event').fill('Tiket pengujian simulasi saja, bukan pembayaran nyata.');
+  for(let i=0;i<5;i++){await editor.getByLabel('Harga per unit (IDR)').nth(i).fill('100000');await editor.getByLabel('Kuota unit').nth(i).fill('10');}
+  await editor.getByRole('combobox',{name:/^Status/}).selectOption('published');
+  await editor.getByRole('button',{name:'Simpan event',exact:true}).click();await expect(editor).toBeHidden();
+  await page.getByRole('link',{name:/New Organizer Live Event/}).click();
+  await expect(page).toHaveURL(/\/organizer\/events\/event_/);
+  const eventId=new URL(page.url()).pathname.split('/').pop()!;
+  const liveUrl='/api/admin/live?eventId='+eventId;
+  await expect(page.locator('.ov-payout strong')).toHaveText('0.00');
+  const guest=await browser.newContext({baseURL});
+  try{
+   expect((await guest.request.get(liveUrl)).status()).toBe(403);
+   const buyer=await guest.newPage();await buyer.goto('/events/new-organizer-live-event/tickets');
+   await buyer.getByRole('button',{name:'Tambah Presale 1 Couple Ticket',exact:true}).click();
+   await buyer.getByRole('button',{name:'Checkout',exact:true}).click();
+   await buyer.getByLabel('Nama lengkap').fill('Live Couple Buyer');await buyer.getByLabel('Alamat email').fill('live-couple@example.test');
+   await buyer.getByLabel('Nomor telepon').fill('081234567890');await buyer.getByLabel('Jenis kelamin').selectOption('female');
+   await buyer.getByRole('radio',{name:/QRIS/}).check();await buyer.getByRole('checkbox').check();
+   await buyer.getByRole('button',{name:'Lanjut ke pembayaran',exact:true}).click();
+   await expect(buyer).toHaveURL(/\/orders\/TIX/);
+   expect((await (await page.request.get(liveUrl)).json()).pendingPeople).toBe(2);
+   await buyer.getByRole('button',{name:'Simulasikan pembayaran sukses'}).click();await expect(buyer.locator('.issued-ticket')).toHaveCount(2);
+   await expect(page.locator('.ov-payout strong')).toHaveText('100,000.00',{timeout:15000});
+   const live=await (await page.request.get(liveUrl)).json();expect(live.revenue).toEqual({subtotal:100000,tax:10000,service:3000,gross:113000});expect(live.paidPeople).toBe(2);expect(live.paidUnits).toBe(1);expect(live.buyers.total).toBe(1);expect(live.pendingPeople).toBe(0);
+   const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Export Report'}).click()]);
+   const workbook=new ExcelJS.Workbook();await workbook.xlsx.readFile((await download.path())!);
+   const summary=new Map<string,unknown>();workbook.getWorksheet('Summary')!.eachRow(r=>summary.set(String(r.getCell(1).value),r.getCell(2).value));
+   expect(summary.get('Subtotal Tickets')).toBe(live.revenue.subtotal);expect(summary.get('Gross Ticket Sales')).toBe(live.revenue.gross);expect(summary.get('Paid Ticket')).toBe(2);
+   await page.getByRole('link',{name:'Sales Trend',exact:true}).first().click();await expect(page.locator('.st-kpi-primary strong')).toContainText('113.000');
+   await page.getByRole('link',{name:'Analytics',exact:true}).click();await expect(page.locator('.an-total strong')).toHaveText('1');
+   await guest.request.post('/api/auth/login',{headers:{Origin:baseURL!},data:{email:'admin@example.test',password:'Browser-test-password-123'}});
+   expect((await guest.request.get(liveUrl)).status()).toBe(404);
+   expect((await guest.request.get('/api/admin/reports/export?eventId='+eventId)).status()).toBe(404);
+  }finally{await guest.close();}
  }finally{await db.end();}
 });

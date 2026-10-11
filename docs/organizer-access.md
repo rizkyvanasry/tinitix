@@ -29,4 +29,11 @@ Transaction tests cover verification, account creation before organization creat
 
 Revenue includes only paid orders. Overview distinguishes ticket subtotal, tax, service fee, and total payments; it does not represent an available payout balance. Stock uses the same converted and unexpired active reservations as checkout, including shared venue capacity and people per package. Sales Trend groups payments by payment time in the event timezone. Buyer Analytics deduplicates paid buyers by email. Checkout age and web traffic are not collected and are shown as unavailable.
 
-Apply `008_live_dashboard_indexes.sql` for the polling query indexes. Migrations 006–008 and the live dashboard have been deployed to staging. Staging payments remain simulated. Type checking and the deployment build passed; the final live purchase flow has not been rerun.
+Apply `008_live_dashboard_indexes.sql` for the polling query indexes. Migrations 006–008 and the live dashboard have been deployed to staging. Staging payments remain simulated. The live flow is covered by the organizer browser suite and reconciliation tests. See docs/organizer-acceptance-2026-10-11.md for the latest run.
+## Self-service staff invitations
+
+Gate Agent allows organizer admins to invite an email address with specific event assignments, edit accepted staff assignments, revoke staff access, and cancel pending invitations. Apply `009_staff_invitations.sql` before deployment.
+
+Invitation tokens are random, stored hashed, expire after seven days, and are accepted once. Acceptance requires a verified logged-in account whose email matches the invitation; new users register and verify before accepting. Admin accounts and staff belonging to another organizer cannot be transferred. A new invitation for the same email revokes the previous pending token. Invitation emails use the existing encrypted email queue and require the configured mail provider/worker.
+
+Revocation removes assignments and returns the membership to buyer access. Check-in rechecks membership inside its transaction, so previously loaded staff sessions cannot continue scanning. Buyer purchases remain available. Invitation creation, acceptance, cancellation, and revocation are audited. Authentication/invitation tokens remain excluded from organizer preview mail.
