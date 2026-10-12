@@ -19,7 +19,7 @@ export function OrganizerWorkspace({events,selectedEvent}:{events:Event[];select
    {selectedEvent?<>
     <Link className="eo-back" href="/organizer/events"><ArrowLeft size={18}/> Semua acara</Link>
     <header className="eo-heading"><div><p className="eo-kicker">DASHBOARD ACARA</p><h1>{selectedEvent.name}</h1></div><button className="button eo-add" onClick={()=>setEditing(selectedEvent)}><Pencil size={18}/> Edit acara</button></header>
-    <div className="eo-event-summary"><img src={selectedEvent.poster} alt=""/><div><span className={'eo-status '+selectedEvent.status}>{statusLabels[selectedEvent.status]}</span><p><CalendarDays size={18}/>{shortDate(selectedEvent.starts,selectedEvent.timezone)}</p><p><MapPin size={18}/>{selectedEvent.venue}, {selectedEvent.city}</p>{selectedEvent.status!=='draft'&&<Link href={'/events/'+selectedEvent.slug}>Lihat halaman acara <ArrowUpRight size={16}/></Link>}</div></div>
+    <div className="eo-event-summary"><img src={selectedEvent.poster} alt=""/><div><span className={'eo-status '+selectedEvent.status}>{statusLabels[selectedEvent.status]}</span><p><CalendarDays size={18}/>{shortDate(selectedEvent.starts,selectedEvent.timezone)}</p><p><MapPin size={18}/>{[selectedEvent.venue,selectedEvent.city].filter(Boolean).join(', ')}</p>{selectedEvent.status!=='draft'&&<Link href={'/events/'+selectedEvent.slug}>Lihat halaman acara <ArrowUpRight size={16}/></Link>}</div></div>
     <section className="eo-report-empty" aria-labelledby="eo-report-title"><BarChart3 size={32} strokeWidth={1.5}/><h2 id="eo-report-title">Laporan penjualan</h2><p>Laporan penjualan untuk acara ini belum tersedia.</p></section>
    </>:<>
     <Link className="eo-back" href="/organizer"><ArrowLeft size={18}/> Organizer saya</Link>

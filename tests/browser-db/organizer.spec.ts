@@ -57,8 +57,8 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
   const editor=page.getByRole('dialog');
   await editor.getByLabel('Nama event',{exact:true}).fill('New Organizer Live Event');
   await editor.getByLabel('URL halaman event').fill('new-organizer-live-event');
-  await editor.getByLabel('Nama venue').fill('Test Venue');
-  await editor.getByLabel('Alamat lengkap').fill('Jalan Test 123');
+  await editor.getByLabel('Location name').fill('Test Venue');
+  await editor.getByLabel('Location details').fill('Jalan Test 123');
   await editor.getByLabel('Deskripsi').fill('Event khusus pengujian alur organizer sampai laporan.');
   await editor.getByLabel('Syarat event').fill('Tiket pengujian simulasi saja, bukan pembayaran nyata.');
   for(let i=0;i<5;i++){await editor.getByLabel('Harga per unit (IDR)').nth(i).fill('100000');await editor.getByLabel('Kuota unit').nth(i).fill('10');}
