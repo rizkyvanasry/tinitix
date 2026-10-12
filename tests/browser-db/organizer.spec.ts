@@ -56,7 +56,7 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
   await page.getByRole('button',{name:'Tambah acara',exact:true}).first().click();
   const editor=page.getByRole('dialog');
   await editor.getByLabel('Nama event',{exact:true}).fill('New Organizer Live Event');
-  await editor.getByLabel('Slug URL').fill('new-organizer-live-event');
+  await editor.getByLabel('URL halaman event').fill('new-organizer-live-event');
   await editor.getByLabel('Nama venue').fill('Test Venue');
   await editor.getByLabel('Alamat lengkap').fill('Jalan Test 123');
   await editor.getByLabel('Deskripsi').fill('Event khusus pengujian alur organizer sampai laporan.');

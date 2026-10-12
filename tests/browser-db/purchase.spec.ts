@@ -18,7 +18,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await page.getByRole('button',{name:'Tambah acara',exact:true}).first().click();
  const editor=page.getByRole('dialog');
  await editor.getByLabel('Nama event',{exact:true}).fill('Browser Couple Event');
- await editor.getByLabel('Slug URL').fill('browser-couple-event');
+ await editor.getByLabel('URL halaman event').fill('browser-couple-event');
  await editor.getByLabel('Nama venue').fill('Test Venue');
  await editor.getByLabel('Alamat lengkap').fill('Jalan Test 123');
  await editor.getByLabel('Deskripsi').fill('Event khusus pengujian browser dengan database terisolasi.');
