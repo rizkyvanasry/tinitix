@@ -265,3 +265,11 @@ it('staff invitations require matching verified acceptance, isolate events, expi
  assert.equal((await listStaff(admin)).members.length,0);
  assert.equal((await listStaff(other)).invitations.length,0);
 });
+it('event discovery category and tags persist independently of ticket types',async()=>{
+ const saved=await saveEvent({...event,eventCategory:'Film & media',tags:[' cinema ','Premiere','cinema']},admin);
+ const reopened=await getEvent(saved.id);
+ assert.equal(reopened.eventCategory,'Film & media');assert.deepEqual(reopened.tags,['cinema','Premiere']);assert.equal(reopened.categories.length,5);
+ await saveEvent({...reopened,eventCategory:'Music',tags:[]},admin);
+ assert.deepEqual((await getEvent(saved.id)).tags,[]);
+ await assert.rejects(saveEvent({...event,eventCategory:'Unknown'},admin));
+});

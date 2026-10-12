@@ -12,7 +12,7 @@ export function Catalog({events}:{events:PublicEvent[]}){
  const [kinds,setKinds]=useState<string[]>([]),[city,setCity]=useState(''),[date,setDate]=useState(''),[sort,setSort]=useState('date');
  const toggleKind=(kind:string)=>setKinds(current=>current.includes(kind)?current.filter(value=>value!==kind):[...current,kind]);
  const cities=[...new Set(events.map(e=>e.city).filter(Boolean))];
- const filtered=useMemo(()=>events.filter(e=>(!kinds.length||kinds.includes(e.kind))&&(!city||e.city===city)&&(!query.trim()||(e.name+' '+e.city+' '+e.venue+' '+e.lineup.join(' ')).toLowerCase().includes(query.trim().toLowerCase()))&&(!date||new Date(e.starts)<=new Date(Date.now()+Number(date)*86400000))).sort((a,b)=>sort==='price'?(a.startingPrice??Infinity)-(b.startingPrice??Infinity):Date.parse(a.starts)-Date.parse(b.starts)),[events,kinds,city,query,date,sort]);
+ const filtered=useMemo(()=>events.filter(e=>(!kinds.length||kinds.includes(e.kind))&&(!city||e.city===city)&&(!query.trim()||(e.name+' '+e.city+' '+e.venue+' '+e.lineup.join(' ')+' '+(e.eventCategory||'')+' '+(e.tags||[]).join(' ')).toLowerCase().includes(query.trim().toLowerCase()))&&(!date||new Date(e.starts)<=new Date(Date.now()+Number(date)*86400000))).sort((a,b)=>sort==='price'?(a.startingPrice??Infinity)-(b.startingPrice??Infinity):Date.parse(a.starts)-Date.parse(b.starts)),[events,kinds,city,query,date,sort]);
  const reset=()=>{router.replace('/#events',{scroll:false});setKinds([]);setCity('');setDate('');};
  const clearQuery=()=>router.replace('/#events',{scroll:false});
  useEffect(()=>{if(query)document.getElementById('events')?.scrollIntoView({behavior:'instant'});},[query]);
