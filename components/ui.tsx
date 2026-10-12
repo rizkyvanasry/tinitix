@@ -1,0 +1,7 @@
+import type {ButtonHTMLAttributes,HTMLAttributes,InputHTMLAttributes,ReactNode} from 'react';
+import {Search} from 'lucide-react';
+export function Container({className='',...props}:HTMLAttributes<HTMLDivElement>){return <div className={'container '+className} {...props}/>;}
+export function Button({variant='primary',loading=false,children,className='',disabled,...props}:ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'primary'|'secondary'|'tertiary';loading?:boolean}){return <button {...props} disabled={disabled||loading} aria-busy={loading||undefined} className={'button '+(variant==='secondary'?'button-outline':variant==='tertiary'?'button-tertiary':'')+' '+className}><span>{children}</span>{loading&&<span className="button-loading" aria-label="Memproses"/>}</button>;}
+export function Badge({children}:{children:ReactNode}){return <span className="ds-badge">{children}</span>;}
+export function SearchInput({id,label='Cari nama event atau lokasi',...props}:InputHTMLAttributes<HTMLInputElement>&{id:string;label?:string}){return <div className="ds-search"><label className="sr-only" htmlFor={id}>{label}</label><Search size={20} aria-hidden="true"/><input {...props} id={id} type="search" placeholder="Cari event, lokasi, atau artis"/></div>;}
+export function SectionHeader({title,children}:{title:string;children?:ReactNode}){return <div className="ds-section-heading"><h2>{title}</h2>{children}</div>;}

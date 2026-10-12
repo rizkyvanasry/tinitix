@@ -1,7 +1,7 @@
 .organizer-register-page{min-height:calc(100svh - 88px);padding:50px 24px 100px;background:#fff}
 .organizer-register-wrap{width:min(575px,100%);margin:0 auto}
 .organizer-register-wrap>.eyebrow{display:block;font-size:11px;letter-spacing:2px;font-weight:600;margin-bottom:9px}
-.organizer-register-wrap h1{font-family:'IBM Plex Sans',sans-serif;font-size:clamp(42px,4.6vw,60px);font-weight:600;line-height:1.1;letter-spacing:-2px;margin:0 0 20px;color:#404246}
+.organizer-register-wrap h1{font-family:var(--font-body);font-size:clamp(42px,4.6vw,60px);font-weight:600;line-height:1.1;letter-spacing:-2px;margin:0 0 20px;color:#404246}
 .organizer-register-intro{font-size:15px;line-height:1.6;color:#66707a;margin:0 0 34px}
 .organizer-register-form{display:grid;gap:25px}
 .organizer-register-form .field,.organizer-register-phone>.field{font-size:19px;font-weight:400;color:#434a50;line-height:1.35}

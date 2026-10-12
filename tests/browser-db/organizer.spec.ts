@@ -46,7 +46,7 @@ test('organizer registers, verifies email, logs in and owns an empty dashboard',
   await page.getByRole('button',{name:'Tutup editor'}).click();
   await page.goto('/organizer/create-event');
   await expect(page).toHaveURL(/\/organizer$/);
-  await page.getByRole('link',{name:'Tiket Saya',exact:true}).click();
+  await page.getByRole('link',{name:'Tiket saya',exact:true}).click();
   await expect(page).toHaveURL(/\/account$/);
   await page.getByRole('link',{name:'Event Organizer',exact:true}).click();
   await expect(page).toHaveURL(/\/organizer$/);
