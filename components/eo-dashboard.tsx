@@ -2,7 +2,7 @@
 import {useState,type ReactNode} from 'react';
 import Link from 'next/link';
 import {useRouter} from 'next/navigation';
-import {BarChart3,CalendarDays,ChevronDown,ClipboardList,ContactRound,HelpCircle,Menu,Pencil,X} from 'lucide-react';
+import {BarChart3,CalendarDays,ChevronDown,ClipboardList,ContactRound,ExternalLink,HelpCircle,Menu,Pencil,X} from 'lucide-react';
 import {Logo} from './shell';
 import {EoLivePanels} from './eo-live-panels';
 
@@ -17,6 +17,7 @@ export function EoDashboard({event,view,children}:{event:Event;view:DashboardVie
  const [mobile,setMobile]=useState(false),[editing,setEditing]=useState(false);
  const router=useRouter();
  const base='/organizer/events/'+event.id;
+ const statusLabel={draft:'Draft',published:'Published',closed:'Penjualan ditutup',cancelled:'Dibatalkan'}[event.status];
  function group(label:string,Icon:typeof BarChart3,items:DashboardView[]){const active=items.includes(view);return <details key={label} className={active?'eo-nav-group active':'eo-nav-group'} open={active||undefined}><summary><Icon size={24}/><span>{label}</span><ChevronDown size={19}/></summary><div>{items.map(item=><Link key={item} href={base+'?view='+item} aria-current={view===item?'page':undefined} onClick={()=>setMobile(false)}>{dashboardViews[item]}</Link>)}</div></details>;}
  return <div className="eo-dashboard-layout">
   <button className="eo-mobile-toggle" onClick={()=>setMobile(!mobile)} aria-expanded={mobile} aria-controls="eo-sidebar">{mobile?<X/>:<Menu/>} Menu dashboard</button>
@@ -26,7 +27,7 @@ export function EoDashboard({event,view,children}:{event:Event;view:DashboardVie
    {group('Event',Pencil,['details','tickets','design','registration'])}
    {group('Manage Attendances',ContactRound,['agents','scans'])}
   </nav><Link className="eo-nav-help" href="/organizer/help-center"><HelpCircle size={24}/><span>Need Help?<small>FAQ Event Organizer</small></span></Link></aside>
-  <section className="eo-dashboard-content"><div className="eo-dashboard-top"><span>{event.name}</span><Link href="/account">Tiket saya</Link></div><header className="eo-dashboard-title"><div><p>EVENT WORKSPACE</p><h1>{dashboardViews[view]}</h1></div>{['details','tickets','design'].includes(view)&&<button className="button" onClick={()=>setEditing(true)}><Pencil size={17}/> Edit event</button>}</header>
+  <section className="eo-dashboard-content"><div className="eo-dashboard-top"><span>Workspace organizer</span><Link href="/account">Tiket saya</Link></div><section className="eo-event-context" aria-label="Event yang dikelola"><div className="eo-event-context-info"><span className={'eo-event-context-status '+event.status}><span aria-hidden="true"/>{statusLabel}</span><h2>{event.name}</h2></div>{event.status==='draft'?<span className="eo-event-context-draft"><span className="button button-outline" aria-disabled="true"><ExternalLink size={20} aria-hidden="true"/>Go to Event Page</span><small>Tersedia setelah event dipublikasikan.</small></span>:<Link className="button button-outline" href={'/events/'+event.slug} target="_blank" rel="noopener noreferrer">Go to Event Page<ExternalLink size={20} aria-hidden="true"/><span className="sr-only"> (buka tab baru)</span></Link>}</section><header className="eo-dashboard-title"><div><p>EVENT WORKSPACE</p><h1>{dashboardViews[view]}</h1></div>{['details','tickets','design'].includes(view)&&<button className="button" onClick={()=>setEditing(true)}><Pencil size={17}/> Edit event</button>}</header>
    {children}
    {['overview','sales','analytics'].includes(view)&&<EoLivePanels eventId={event.id} view={view} base={base}/>}
    
