@@ -1,0 +1,977 @@
+{
+  "run": {
+    "harnessVersion": 1,
+    "startedAt": "2026-10-13T09:38:15.498Z",
+    "commit": "63b69ccc9d953c4a577ed8768a60322ba3bda36c",
+    "node": "v24.11.0",
+    "mode": "local next start production build + remote PostgreSQL isolated schema",
+    "fixture": {
+      "organizations": 10,
+      "events": 10,
+      "paidOrdersPerEvent": 500,
+      "poolMax": 3
+    },
+    "workload": {
+      "pollIntervalMs": 3000,
+      "pollMode": "fixed cadence; skip if previous request is still in flight",
+      "buyerThinkTimeMs": 10000,
+      "buyerMode": "closed loop; all purchases contend on event-0",
+      "timeoutMs": 15000,
+      "mailDelivery": false,
+      "payment": "simulation"
+    },
+    "thresholds": {
+      "dashboardP95Ms": 1000,
+      "checkoutStepP95Ms": 2000,
+      "checkoutJourneyP95Ms": 10000,
+      "errorRate": 0.01
+    },
+    "stages": [
+      {
+        "eo": 1,
+        "buyers": 1,
+        "seconds": 30,
+        "elapsedSeconds": 31.8335628,
+        "offeredPolls": 10,
+        "skippedPolls": 0,
+        "maxSchedulerLagMs": 11.73319999999876,
+        "dashboardRps": 0.3333333333333333,
+        "metrics": {
+          "reserve": {
+            "count": 3,
+            "errors": 0,
+            "p50Ms": 1160.8606,
+            "p95Ms": 1662.7350000000006,
+            "p99Ms": 1662.7350000000006,
+            "maxMs": 1662.7350000000006,
+            "statuses": {
+              "201": 3
+            }
+          },
+          "dashboard": {
+            "count": 10,
+            "errors": 0,
+            "p50Ms": 975.3561000000045,
+            "p95Ms": 1572.4434,
+            "p99Ms": 1572.4434,
+            "maxMs": 1572.4434,
+            "statuses": {
+              "200": 10
+            }
+          },
+          "buyer": {
+            "count": 3,
+            "errors": 0,
+            "p50Ms": 753.755799999999,
+            "p95Ms": 1055.3243000000002,
+            "p99Ms": 1055.3243000000002,
+            "maxMs": 1055.3243000000002,
+            "statuses": {
+              "200": 3
+            }
+          },
+          "simulate": {
+            "count": 3,
+            "errors": 0,
+            "p50Ms": 1702.2516999999934,
+            "p95Ms": 2133.057399999998,
+            "p99Ms": 2133.057399999998,
+            "maxMs": 2133.057399999998,
+            "statuses": {
+              "200": 3
+            }
+          },
+          "journey": {
+            "count": 3,
+            "errors": 0,
+            "p50Ms": 3695.3198999999986,
+            "p95Ms": 4549.7423999999955,
+            "p99Ms": 4549.7423999999955,
+            "maxMs": 4549.7423999999955,
+            "statuses": {
+              "200": 3
+            }
+          }
+        },
+        "database": {
+          "samples": 28,
+          "monitorErrors": 0,
+          "maxConnections": 2,
+          "meanActive": 0,
+          "maxActive": 0,
+          "samplesWithLocks": 0,
+          "waits": {
+            "Client:ClientRead": 53
+          }
+        },
+        "drain": {
+          "settled": true,
+          "ms": 4404.6198
+        },
+        "integrity": {
+          "matches": true,
+          "oversoldCategories": 0,
+          "paidOrders": 504,
+          "gross": 56952000
+        }
+      },
+      {
+        "eo": 10,
+        "buyers": 2,
+        "seconds": 45,
+        "elapsedSeconds": 49.374272,
+        "offeredPolls": 150,
+        "skippedPolls": 19,
+        "maxSchedulerLagMs": 28.506600000000617,
+        "dashboardRps": 2.911111111111111,
+        "metrics": {
+          "reserve": {
+            "count": 7,
+            "errors": 0,
+            "p50Ms": 2010.4212000000043,
+            "p95Ms": 2757.5938999999926,
+            "p99Ms": 2757.5938999999926,
+            "maxMs": 2757.5938999999926,
+            "statuses": {
+              "201": 7
+            }
+          },
+          "dashboard": {
+            "count": 131,
+            "errors": 0,
+            "p50Ms": 2404.388699999996,
+            "p95Ms": 3239.590400000001,
+            "p99Ms": 3532.565699999999,
+            "maxMs": 3533.721900000004,
+            "statuses": {
+              "200": 131
+            }
+          },
+          "buyer": {
+            "count": 7,
+            "errors": 0,
+            "p50Ms": 1538.5388999999996,
+            "p95Ms": 2093.861800000006,
+            "p99Ms": 2093.861800000006,
+            "maxMs": 2093.861800000006,
+            "statuses": {
+              "200": 7
+            }
+          },
+          "simulate": {
+            "count": 7,
+            "errors": 0,
+            "p50Ms": 4111.2137000000075,
+            "p95Ms": 5129.745200000005,
+            "p99Ms": 5129.745200000005,
+            "maxMs": 5129.745200000005,
+            "statuses": {
+              "200": 7
+            }
+          },
+          "journey": {
+            "count": 7,
+            "errors": 0,
+            "p50Ms": 7766.213499999998,
+            "p95Ms": 8922.290300000008,
+            "p99Ms": 8922.290300000008,
+            "maxMs": 8922.290300000008,
+            "statuses": {
+              "200": 7
+            }
+          }
+        },
+        "database": {
+          "samples": 42,
+          "monitorErrors": 0,
+          "maxConnections": 3,
+          "meanActive": 0,
+          "maxActive": 0,
+          "samplesWithLocks": 0,
+          "waits": {
+            "Client:ClientRead": 123,
+            "null:null": 1
+          }
+        },
+        "drain": {
+          "settled": true,
+          "ms": 4352.060799999992
+        },
+        "integrity": {
+          "matches": true,
+          "oversoldCategories": 0,
+          "paidOrders": 511,
+          "gross": 57743000
+        }
+      },
+      {
+        "eo": 25,
+        "buyers": 5,
+        "seconds": 45,
+        "elapsedSeconds": 56.05281179999999,
+        "offeredPolls": 375,
+        "skippedPolls": 225,
+        "maxSchedulerLagMs": 72.41569999999774,
+        "dashboardRps": 3.3333333333333335,
+        "metrics": {
+          "dashboard": {
+            "count": 150,
+            "errors": 0,
+            "p50Ms": 7028.150200000004,
+            "p95Ms": 8473.427400000015,
+            "p99Ms": 8996.368200000012,
+            "maxMs": 9063.854200000002,
+            "statuses": {
+              "200": 150
+            }
+          },
+          "reserve": {
+            "count": 10,
+            "errors": 0,
+            "p50Ms": 6732.470099999977,
+            "p95Ms": 8777.49459999999,
+            "p99Ms": 8777.49459999999,
+            "maxMs": 8777.49459999999,
+            "statuses": {
+              "201": 10
+            }
+          },
+          "buyer": {
+            "count": 10,
+            "errors": 0,
+            "p50Ms": 4598.7624999999825,
+            "p95Ms": 6685.621899999998,
+            "p99Ms": 6685.621899999998,
+            "maxMs": 6685.621899999998,
+            "statuses": {
+              "200": 10
+            }
+          },
+          "simulate": {
+            "count": 10,
+            "errors": 0,
+            "p50Ms": 11545.631200000003,
+            "p95Ms": 14940.083899999998,
+            "p99Ms": 14940.083899999998,
+            "maxMs": 14940.083899999998,
+            "statuses": {
+              "200": 10
+            }
+          },
+          "journey": {
+            "count": 10,
+            "errors": 0,
+            "p50Ms": 21315.916399999987,
+            "p95Ms": 27731.75630000001,
+            "p99Ms": 27731.75630000001,
+            "maxMs": 27731.75630000001,
+            "statuses": {
+              "200": 10
+            }
+          }
+        },
+        "database": {
+          "samples": 42,
+          "monitorErrors": 0,
+          "maxConnections": 3,
+          "meanActive": 0.023809523809523808,
+          "maxActive": 1,
+          "samplesWithLocks": 1,
+          "waits": {
+            "Client:ClientRead": 124,
+            "Lock:transactionid": 1,
+            "null:null": 1
+          }
+        },
+        "drain": {
+          "settled": true,
+          "ms": 4807.115899999975
+        },
+        "integrity": {
+          "matches": true,
+          "oversoldCategories": 0,
+          "paidOrders": 521,
+          "gross": 58873000
+        }
+      },
+      {
+        "eo": 50,
+        "buyers": 10,
+        "seconds": 60,
+        "elapsedSeconds": 78.86714179999998,
+        "offeredPolls": 1000,
+        "skippedPolls": 791,
+        "maxSchedulerLagMs": 42.72429999997257,
+        "dashboardRps": 3.4833333333333334,
+        "metrics": {
+          "dashboard": {
+            "count": 209,
+            "errors": 152,
+            "p50Ms": 15005.07209999999,
+            "p95Ms": 15015.37049999999,
+            "p99Ms": 15016.675099999993,
+            "maxMs": 15017.679900000017,
+            "statuses": {
+              "0": 152,
+              "200": 57
+            }
+          },
+          "reserve": {
+            "count": 29,
+            "errors": 25,
+            "p50Ms": 15005.212,
+            "p95Ms": 15015.43769999998,
+            "p99Ms": 15018.369799999986,
+            "maxMs": 15018.369799999986,
+            "statuses": {
+              "0": 25,
+              "201": 4
+            }
+          },
+          "buyer": {
+            "count": 4,
+            "errors": 0,
+            "p50Ms": 9570.040299999993,
+            "p95Ms": 12159.62910000002,
+            "p99Ms": 12159.62910000002,
+            "maxMs": 12159.62910000002,
+            "statuses": {
+              "200": 4
+            }
+          },
+          "simulate": {
+            "count": 4,
+            "errors": 3,
+            "p50Ms": 15003.609200000006,
+            "p95Ms": 15008.843200000003,
+            "p99Ms": 15008.843200000003,
+            "maxMs": 15008.843200000003,
+            "statuses": {
+              "0": 3,
+              "200": 1
+            }
+          },
+          "journey": {
+            "count": 29,
+            "errors": 28,
+            "p50Ms": 15006.489299999987,
+            "p95Ms": 31496.392500000016,
+            "p99Ms": 38627.231499999994,
+            "maxMs": 38627.231499999994,
+            "statuses": {
+              "0": 28,
+              "200": 1
+            }
+          }
+        },
+        "database": {
+          "samples": 56,
+          "monitorErrors": 0,
+          "maxConnections": 3,
+          "meanActive": 0.08928571428571429,
+          "maxActive": 1,
+          "samplesWithLocks": 3,
+          "waits": {
+            "Client:ClientRead": 163,
+            "Lock:transactionid": 3,
+            "null:null": 1,
+            "IPC:SyncRep": 1
+          }
+        },
+        "drain": {
+          "settled": true,
+          "ms": 4873.166400000016
+        },
+        "integrity": {
+          "matches": true,
+          "oversoldCategories": 0,
+          "paidOrders": 525,
+          "gross": 59325000
+        }
+      }
+    ],
+    "databaseRoundTrip": {
+      "samples": 20,
+      "meanMs": 60.80442000000003,
+      "p95Ms": 66.49070000000029
+    },
+    "warmup": {
+      "reserve": {
+        "count": 1,
+        "errors": 0,
+        "p50Ms": 948.8205999999991,
+        "p95Ms": 948.8205999999991,
+        "p99Ms": 948.8205999999991,
+        "maxMs": 948.8205999999991,
+        "statuses": {
+          "201": 1
+        }
+      },
+      "buyer": {
+        "count": 1,
+        "errors": 0,
+        "p50Ms": 724.6687000000002,
+        "p95Ms": 724.6687000000002,
+        "p99Ms": 724.6687000000002,
+        "maxMs": 724.6687000000002,
+        "statuses": {
+          "200": 1
+        }
+      },
+      "simulate": {
+        "count": 1,
+        "errors": 0,
+        "p50Ms": 1669.4381000000012,
+        "p95Ms": 1669.4381000000012,
+        "p99Ms": 1669.4381000000012,
+        "maxMs": 1669.4381000000012,
+        "statuses": {
+          "200": 1
+        }
+      },
+      "journey": {
+        "count": 1,
+        "errors": 0,
+        "p50Ms": 3343.331900000001,
+        "p95Ms": 3343.331900000001,
+        "p99Ms": 3343.331900000001,
+        "maxMs": 3343.331900000001,
+        "statuses": {
+          "200": 1
+        }
+      }
+    },
+    "stoppedEarly": "Over 20% timeout/5xx; higher load skipped",
+    "tableStats": [
+      {
+        "relname": "assignments",
+        "n_live_tup": "0",
+        "n_tup_ins": "0",
+        "n_tup_upd": "0",
+        "seq_scan": "1",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "audit_logs",
+        "n_live_tup": "25",
+        "n_tup_ins": "25",
+        "n_tup_upd": "0",
+        "seq_scan": "1",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "auth_tokens",
+        "n_live_tup": "0",
+        "n_tup_ins": "0",
+        "n_tup_upd": "0",
+        "seq_scan": "1",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "categories",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "1842",
+        "idx_scan": "12266"
+      },
+      {
+        "relname": "check_ins",
+        "n_live_tup": "0",
+        "n_tup_ins": "0",
+        "n_tup_upd": "0",
+        "seq_scan": "1",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "email_jobs",
+        "n_live_tup": "50",
+        "n_tup_ins": "50",
+        "n_tup_upd": "0",
+        "seq_scan": "1",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "events",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "682",
+        "idx_scan": "5010"
+      },
+      {
+        "relname": "memberships",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "1010",
+        "idx_scan": "4036"
+      },
+      {
+        "relname": "order_access",
+        "n_live_tup": "100",
+        "n_tup_ins": "100",
+        "n_tup_upd": "0",
+        "seq_scan": "76",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "order_items",
+        "n_live_tup": "5050",
+        "n_tup_ins": "5050",
+        "n_tup_upd": "0",
+        "seq_scan": "506",
+        "idx_scan": "253918"
+      },
+      {
+        "relname": "orders",
+        "n_live_tup": "5050",
+        "n_tup_ins": "5050",
+        "n_tup_upd": "75",
+        "seq_scan": "12",
+        "idx_scan": "18632"
+      },
+      {
+        "relname": "organizations",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "4",
+        "idx_scan": "20"
+      },
+      {
+        "relname": "payment_events",
+        "n_live_tup": "5025",
+        "n_tup_ins": "5025",
+        "n_tup_upd": "0",
+        "seq_scan": "3",
+        "idx_scan": "252885"
+      },
+      {
+        "relname": "rate_limits",
+        "n_live_tup": "101",
+        "n_tup_ins": "100",
+        "n_tup_upd": "50",
+        "seq_scan": "1",
+        "idx_scan": "150"
+      },
+      {
+        "relname": "reservations",
+        "n_live_tup": "5050",
+        "n_tup_ins": "5050",
+        "n_tup_upd": "25",
+        "seq_scan": "2",
+        "idx_scan": "1216"
+      },
+      {
+        "relname": "sessions",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "1010",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "staff_invitations",
+        "n_live_tup": "0",
+        "n_tup_ins": "0",
+        "n_tup_upd": "0",
+        "seq_scan": "4",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "tickets",
+        "n_live_tup": "25",
+        "n_tup_ins": "25",
+        "n_tup_upd": "0",
+        "seq_scan": "3",
+        "idx_scan": "0"
+      },
+      {
+        "relname": "users",
+        "n_live_tup": "10",
+        "n_tup_ins": "10",
+        "n_tup_upd": "0",
+        "seq_scan": "1012",
+        "idx_scan": "4056"
+      }
+    ],
+    "acceptance": [
+      {
+        "eo": 1,
+        "buyers": 1,
+        "errorRate": 0,
+        "pass": false
+      },
+      {
+        "eo": 10,
+        "buyers": 2,
+        "errorRate": 0,
+        "pass": false
+      },
+      {
+        "eo": 25,
+        "buyers": 5,
+        "errorRate": 0,
+        "pass": false
+      },
+      {
+        "eo": 50,
+        "buyers": 10,
+        "errorRate": 0.7317073170731707,
+        "pass": false
+      }
+    ],
+    "targetMet": false,
+    "finishedAt": "2026-10-13T09:42:34.373Z",
+    "cleanedUp": true
+  },
+  "auxiliaryProbeFromExploratoryRun": {
+    "sampledAt": "2026-10-13T09:35:10.087Z",
+    "roundTripMs": [
+      63.636400000000094,
+      58.70720000000006,
+      66.78150000000005,
+      65.71960000000013,
+      57.21759999999995,
+      59.04359999999997,
+      75.13179999999988,
+      75.68549999999982,
+      81.99840000000017,
+      85.99270000000001,
+      65.93550000000005,
+      75.84960000000001,
+      64.97260000000006,
+      65.47080000000005,
+      102.76109999999994,
+      70.29570000000012,
+      62.71069999999963,
+      57.09130000000005,
+      64.77549999999974,
+      77.79110000000037
+    ],
+    "dailyQueryPlan": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Sorted",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 4480.77,
+          "Total Cost": 8802.76,
+          "Plan Rows": 1,
+          "Plan Width": 60,
+          "Actual Startup Time": 3.418,
+          "Actual Total Time": 3.419,
+          "Actual Rows": 1,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Group Key": [
+            "(to_char((((InitPlan 2).col1) AT TIME ZONE 'Asia/Jakarta'::text), 'YYYY-MM-DD'::text))"
+          ],
+          "Shared Hit Blocks": 3111,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Sort",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 4480.77,
+              "Total Cost": 4482.06,
+              "Plan Rows": 519,
+              "Plan Width": 50,
+              "Actual Startup Time": 2.223,
+              "Actual Total Time": 2.251,
+              "Actual Rows": 513,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Sort Key": [
+                "(to_char((((InitPlan 2).col1) AT TIME ZONE 'Asia/Jakarta'::text), 'YYYY-MM-DD'::text))"
+              ],
+              "Sort Method": "quicksort",
+              "Sort Space Used": 49,
+              "Sort Space Type": "Memory",
+              "Shared Hit Blocks": 1572,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Nested Loop",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Join Type": "Left",
+                  "Startup Cost": 17.9,
+                  "Total Cost": 4457.36,
+                  "Plan Rows": 519,
+                  "Plan Width": 50,
+                  "Actual Startup Time": 0.373,
+                  "Actual Total Time": 2.062,
+                  "Actual Rows": 513,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Inner Unique": false,
+                  "Shared Hit Blocks": 1569,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0,
+                  "Plans": [
+                    {
+                      "Node Type": "Bitmap Heap Scan",
+                      "Parent Relationship": "Outer",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Relation Name": "orders",
+                      "Alias": "o",
+                      "Startup Cost": 9.6,
+                      "Total Cost": 135.39,
+                      "Plan Rows": 519,
+                      "Plan Width": 18,
+                      "Actual Startup Time": 0.044,
+                      "Actual Total Time": 0.186,
+                      "Actual Rows": 513,
+                      "Actual Loops": 1,
+                      "Disabled": false,
+                      "Recheck Cond": "((event_id = 'event-0'::text) AND (status = 'paid'::text))",
+                      "Rows Removed by Index Recheck": 0,
+                      "Exact Heap Blocks": 14,
+                      "Lossy Heap Blocks": 0,
+                      "Shared Hit Blocks": 16,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Bitmap Index Scan",
+                          "Parent Relationship": "Outer",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Index Name": "orders_event_status_created_idx",
+                          "Startup Cost": 0,
+                          "Total Cost": 9.47,
+                          "Plan Rows": 519,
+                          "Plan Width": 0,
+                          "Actual Startup Time": 0.027,
+                          "Actual Total Time": 0.027,
+                          "Actual Rows": 514,
+                          "Actual Loops": 1,
+                          "Disabled": false,
+                          "Index Cond": "((event_id = 'event-0'::text) AND (status = 'paid'::text))",
+                          "Index Searches": 1,
+                          "Shared Hit Blocks": 2,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0
+                        }
+                      ]
+                    },
+                    {
+                      "Node Type": "Result",
+                      "Parent Relationship": "Inner",
+                      "Parallel Aware": false,
+                      "Async Capable": false,
+                      "Startup Cost": 8.3,
+                      "Total Cost": 8.31,
+                      "Plan Rows": 1,
+                      "Plan Width": 8,
+                      "Actual Startup Time": 0.002,
+                      "Actual Total Time": 0.002,
+                      "Actual Rows": 1,
+                      "Actual Loops": 513,
+                      "Disabled": false,
+                      "Shared Hit Blocks": 1553,
+                      "Shared Read Blocks": 0,
+                      "Shared Dirtied Blocks": 0,
+                      "Shared Written Blocks": 0,
+                      "Local Hit Blocks": 0,
+                      "Local Read Blocks": 0,
+                      "Local Dirtied Blocks": 0,
+                      "Local Written Blocks": 0,
+                      "Temp Read Blocks": 0,
+                      "Temp Written Blocks": 0,
+                      "Plans": [
+                        {
+                          "Node Type": "Limit",
+                          "Parent Relationship": "InitPlan",
+                          "Subplan Name": "InitPlan 2",
+                          "Parallel Aware": false,
+                          "Async Capable": false,
+                          "Startup Cost": 0.28,
+                          "Total Cost": 8.3,
+                          "Plan Rows": 1,
+                          "Plan Width": 8,
+                          "Actual Startup Time": 0.002,
+                          "Actual Total Time": 0.002,
+                          "Actual Rows": 1,
+                          "Actual Loops": 513,
+                          "Disabled": false,
+                          "Shared Hit Blocks": 1553,
+                          "Shared Read Blocks": 0,
+                          "Shared Dirtied Blocks": 0,
+                          "Shared Written Blocks": 0,
+                          "Local Hit Blocks": 0,
+                          "Local Read Blocks": 0,
+                          "Local Dirtied Blocks": 0,
+                          "Local Written Blocks": 0,
+                          "Temp Read Blocks": 0,
+                          "Temp Written Blocks": 0,
+                          "Plans": [
+                            {
+                              "Node Type": "Index Only Scan",
+                              "Parent Relationship": "Outer",
+                              "Parallel Aware": false,
+                              "Async Capable": false,
+                              "Scan Direction": "Forward",
+                              "Index Name": "payment_events_order_paid_idx",
+                              "Relation Name": "payment_events",
+                              "Alias": "payment_events",
+                              "Startup Cost": 0.28,
+                              "Total Cost": 8.3,
+                              "Plan Rows": 1,
+                              "Plan Width": 8,
+                              "Actual Startup Time": 0.001,
+                              "Actual Total Time": 0.001,
+                              "Actual Rows": 1,
+                              "Actual Loops": 513,
+                              "Disabled": false,
+                              "Index Cond": "((order_id = o.id) AND (created_at IS NOT NULL))",
+                              "Rows Removed by Index Recheck": 0,
+                              "Heap Fetches": 13,
+                              "Index Searches": 513,
+                              "Shared Hit Blocks": 1553,
+                              "Shared Read Blocks": 0,
+                              "Shared Dirtied Blocks": 0,
+                              "Shared Written Blocks": 0,
+                              "Local Hit Blocks": 0,
+                              "Local Read Blocks": 0,
+                              "Local Dirtied Blocks": 0,
+                              "Local Written Blocks": 0,
+                              "Temp Read Blocks": 0,
+                              "Temp Written Blocks": 0
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Node Type": "Aggregate",
+              "Strategy": "Plain",
+              "Partial Mode": "Simple",
+              "Parent Relationship": "SubPlan",
+              "Subplan Name": "SubPlan 1",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Startup Cost": 8.3,
+              "Total Cost": 8.31,
+              "Plan Rows": 1,
+              "Plan Width": 8,
+              "Actual Startup Time": 0.002,
+              "Actual Total Time": 0.002,
+              "Actual Rows": 1,
+              "Actual Loops": 513,
+              "Disabled": false,
+              "Shared Hit Blocks": 1539,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Scan Direction": "Forward",
+                  "Index Name": "order_items_order_idx",
+                  "Relation Name": "order_items",
+                  "Alias": "i",
+                  "Startup Cost": 0.28,
+                  "Total Cost": 8.3,
+                  "Plan Rows": 1,
+                  "Plan Width": 4,
+                  "Actual Startup Time": 0.001,
+                  "Actual Total Time": 0.001,
+                  "Actual Rows": 1,
+                  "Actual Loops": 513,
+                  "Disabled": false,
+                  "Index Cond": "(order_id = o.id)",
+                  "Rows Removed by Index Recheck": 0,
+                  "Index Searches": 513,
+                  "Shared Hit Blocks": 1539,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 280,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 1.047,
+        "Triggers": [],
+        "Execution Time": 3.527
+      }
+    ]
+  }
+}

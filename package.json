@@ -21,7 +21,8 @@
     "backend:check": "tsx scripts/check-backend.ts",
     "ops:check": "tsx scripts/check-operations.ts",
     "worker": "tsx scripts/worker.ts",
-    "worker:once": "tsx scripts/worker.ts --once"
+    "worker:once": "tsx scripts/worker.ts --once",
+    "test:load": "tsx scripts/test-load.ts"
   },
   "keywords": [
     "openai",

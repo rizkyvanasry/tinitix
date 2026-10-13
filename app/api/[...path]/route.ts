@@ -1,3 +1,4 @@
+import {measureRequest,measureAuth} from '@/lib/performance';
 import {runMaintenance} from '@/lib/maintenance';
 import {NextRequest,NextResponse,after} from 'next/server';
 import {ZodError} from 'zod';
@@ -29,7 +30,7 @@ async function handle(req:NextRequest){
  if(method==='POST'&&route==='payments/webhook'){const raw=await req.text();if(raw.length>16000)throw new AppError(413,'Payload terlalu besar.');const payment=paymentAdapter().verifyWebhook(raw,req.headers.get('x-payment-signature')||'');const result=await settlePayment(payment);after(processMailJobs);return json(result);}
  if(method==='POST'){const origin=req.headers.get('origin');if(!origin||origin!==new URL(appUrl()).origin)throw new AppError(403,'Origin tidak valid.');}
  const sid=req.cookies.get('tinitix_session')?.value;
- const user=await currentUser(sid);
+ const user=await measureAuth(()=>currentUser(sid));
  if(method==='GET'&&route==='auth/me')return json({user});
  if(method==='GET'&&route==='account/orders'){
   if(!user?.verified)throw new AppError(403,'Verifikasi email untuk melihat pesanan.');
@@ -44,7 +45,7 @@ async function handle(req:NextRequest){
   const bytes=await reportWorkbook(report);
   return new NextResponse(bytes,{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="export_report_'+report.event.id.replace(/[^a-zA-Z0-9_-]/g,'')+'.xlsx"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
  }
- if(method==='GET'&&route==='admin/live'){const admin=await requireRole(sid,['admin']);const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
+ if(method==='GET'&&route==='admin/live'){const admin=await measureAuth(()=>requireRole(sid,['admin']));const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
  if(method==='GET'&&route==='admin/staff'){const actor=await requireRole(sid,['admin']);const {listStaff}=await import('@/lib/staff-invitations');return json(await listStaff(actor));}
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
  if(method==='GET'&&route==='admin/orders'){
@@ -132,5 +133,10 @@ async function handle(req:NextRequest){
   return json({error:'Layanan sedang mengalami kendala. Silakan coba lagi.'},500);
  }
 }
-export const GET=handle;
-export const POST=handle;
+function timedHandle(req:NextRequest){
+ const path=req.nextUrl.pathname;
+ const label=path==='/api/admin/live'?'dashboard':path==='/api/orders/reserve'?'reserve':/^\/api\/orders\/[^/]+\/buyer$/.test(path)?'buyer':/^\/api\/orders\/[^/]+\/simulate$/.test(path)?'simulate':/^\/api\/orders\/[^/]+\/payment$/.test(path)?'payment':undefined;
+ return label?measureRequest(label,()=>handle(req)):handle(req);
+}
+export const GET=timedHandle;
+export const POST=timedHandle;
