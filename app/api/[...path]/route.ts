@@ -2,9 +2,9 @@ import {measureRequest,measureAuth} from '@/lib/performance';
 import {runMaintenance} from '@/lib/maintenance';
 import {NextRequest,NextResponse,after} from 'next/server';
 import {ZodError} from 'zod';
-import {currentUser,requireRole,login,register,registerOrganizer,createOrganizer,requestAuthEmail,confirmAuth} from '@/lib/auth';
+import {currentUser,requireRole,assertRole,login,register,registerOrganizer,createOrganizer,requestAuthEmail,confirmAuth} from '@/lib/auth';
 import {listEvents,getEvent,loadEvent} from '@/lib/catalog';
-import {completeBuyer,createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment} from '@/lib/orders';
+import {completeBuyer,createOrder,getOrder,createPayment,authorizeOrder,exchangeAccess,requestAccess,resendOrder,settlePayment,simulatePayment} from '@/lib/orders';
 import {adminOverview,saveEvent,staffEvents,checkIn,assignStaff,cancelTicket} from '@/lib/admin';
 import {adminOrderPage,adminOrderExportBatch,csvCell} from '@/lib/admin-orders';
 import {database} from '@/lib/db';
@@ -45,7 +45,7 @@ async function handle(req:NextRequest){
   const bytes=await reportWorkbook(report);
   return new NextResponse(bytes,{headers:{'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Content-Disposition':'attachment; filename="export_report_'+report.event.id.replace(/[^a-zA-Z0-9_-]/g,'')+'.xlsx"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
  }
- if(method==='GET'&&route==='admin/live'){const admin=await measureAuth(()=>requireRole(sid,['admin']));const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
+ if(method==='GET'&&route==='admin/live'){const admin=assertRole(user,['admin']);const eventId=req.nextUrl.searchParams.get('eventId');if(!eventId)throw new AppError(400,'Pilih event.');const {eoLive}=await import('@/lib/eo-live');return json(await eoLive(admin,eventId));}
  if(method==='GET'&&route==='admin/staff'){const actor=await requireRole(sid,['admin']);const {listStaff}=await import('@/lib/staff-invitations');return json(await listStaff(actor));}
  if(method==='GET'&&route==='admin/events'){const admin=await requireRole(sid,['admin']);return json(await adminOverview(admin));}
  if(method==='GET'&&route==='admin/orders'){
@@ -106,9 +106,7 @@ async function handle(req:NextRequest){
   if(match[2]==='resend'){const result=await resendOrder(orderId,access,user);after(processMailJobs);return json(result);}
   if(match[2]==='simulate'){
    if(!simulationEnabled())throw new AppError(404,'Tidak tersedia.');
-   const order=await authorizeOrder(orderId,access,user);const session=await createPayment(orderId,access,user);
-   const event={id:'sim-'+orderId+'-'+(body.status==='failed'?'failed':'paid'),orderId,reference:session.reference,merchant:'tinitix-simulation',amount:order.total,currency:'IDR',status:body.status==='failed'?'failed':'paid'};
-   const payload=JSON.stringify(event);const result=await settlePayment(paymentAdapter().verifyWebhook(payload,sign('webhook:'+payload)));after(processMailJobs);return json(result);
+   const result=await simulatePayment(orderId,body.status==='failed'?'failed':'paid',access,user);after(processMailJobs);return json(result);
   }
  }
  if(route.startsWith('admin/')){

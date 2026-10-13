@@ -10,7 +10,7 @@ let pool:Pool;
 export function database():Db {
  if(testDatabase)return testDatabase;
  if(!process.env.DATABASE_URL)throw new Error('DATABASE_NOT_CONFIGURED');
- if(!pool){pool=new Pool({connectionString:process.env.DATABASE_URL,max:3,idleTimeoutMillis:10000,connectionTimeoutMillis:10000});if(process.env.VERCEL)attachDatabasePool(pool);}
+ if(!pool){pool=new Pool({connectionString:process.env.DATABASE_URL,max:3,idleTimeoutMillis:10000,connectionTimeoutMillis:10000});pool.on('error',()=>console.error('database idle connection failed'));if(process.env.VERCEL)attachDatabasePool(pool);}
  return {query:async(sql,values)=>{const client=await acquire();try{return await measured(client).query(sql,values);}finally{client.release();}}};
 }
 export async function transaction<T>(fn:(db:Db)=>Promise<T>):Promise<T> {

@@ -17,6 +17,7 @@ url.searchParams.set('application_name',application);
 const admin=new Pool({connectionString:process.env.TEST_DATABASE_URL,max:1});
 const fixtureUrl=new URL(url);fixtureUrl.searchParams.set('application_name',schema+'_fixture');
 const db=new Pool({connectionString:fixtureUrl.toString(),max:1});
+for(const pool of [admin,db])pool.on('error',()=>console.error('Load database connection interrupted'));
 const port=Number(process.env.LOAD_PORT||3200);
 if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid LOAD_PORT');
 const base=`http://127.0.0.1:${port}`;

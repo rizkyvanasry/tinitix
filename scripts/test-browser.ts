@@ -5,6 +5,7 @@ import {spawn} from 'node:child_process';
 import {passwordHash} from '../lib/security';
 
 if(!process.env.TEST_DATABASE_URL)throw new Error('Set TEST_DATABASE_URL to a PostgreSQL test server.');
+if(!['127.0.0.1','localhost','[::1]'].includes(new URL(process.env.TEST_DATABASE_URL).hostname))throw new Error('Use a local test database on this performance branch; staging is forbidden.');
 const schema='browser_'+randomUUID().replaceAll('-','');
 const admin=new Pool({connectionString:process.env.TEST_DATABASE_URL,max:1});
 const url=new URL(process.env.TEST_DATABASE_URL);

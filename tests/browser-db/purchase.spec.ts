@@ -82,6 +82,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  const csv=await page.request.get('/api/admin/orders/export?q='+orderId);
  expect(csv.status()).toBe(200);expect(await csv.text()).toContain(orderId);
  await page.goto('/check-in');
+ await page.getByLabel('Event penugasan').selectOption({label:'Browser Couple Event'});
  for(const code of qrCodes){
   await page.getByLabel('Atau masukkan kode dari QR').fill(code);
   await page.getByRole('button',{name:'Validasi tiket'}).click();
@@ -93,6 +94,7 @@ test('admin publishes, guest buys couple, email link opens tickets, and check-in
  await page.goto('/admin/tools');
  await page.getByRole('button',{name:'Laporan Excel',exact:true}).click();
  await expect(page.getByRole('button',{name:'Summary',exact:true})).toBeVisible();
+ await page.getByLabel('Event laporan').selectOption({label:'Browser Couple Event'});
  const eventId=await page.getByLabel('Event laporan').inputValue();
  expect((await outsider.request.get('/api/admin/reports/export?eventId='+eventId)).status()).toBe(403);
  const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Unduh Excel',exact:true}).click()]);

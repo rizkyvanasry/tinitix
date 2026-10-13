@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import {database,transaction,type Db} from './db';
 import {loadEvent,publicEvent,usedStock,getEvent} from './catalog';
 import {AppError,id,hash,token,sign,audit} from './security';
-import {checkoutEnabled} from './config';
+import {checkoutEnabled,appUrl} from './config';
 import {paymentAdapter,type PaymentEvent} from './payment';
 import {enqueueMail,orderEmail} from './mail';
 import type {User,OrderView} from './types';
@@ -22,10 +22,11 @@ export async function createOrder(input:unknown,key:string,reserveOnly=false){
   if(existing){if(reserveOnly&&(existing.status!=='pending'||new Date(existing.expires_at)<=new Date()))throw new AppError(409,'Reservasi sebelumnya berakhir. Pilih tiket kembali.','HOLD_EXPIRED');if(existing.fingerprint!==fingerprint)throw new AppError(409,'Permintaan berubah. Periksa ulang pesanan.');return {id:existing.id,access:await accessGrant(db,existing.id)};}
   const event=await loadEvent(db,body.eventId,true),now=new Date();
   if(event.status!=='published'||new Date(event.ends)<=now)throw new AppError(409,'Penjualan event ini tidak tersedia.');
-  const available=publicEvent(event,await usedStock(db,event.id,now),now);
+  const used=await usedStock(db,event.id,now);
+  const available=publicEvent(event,used,now);
   let total=0,people=0;
   const items=body.items.map(item=>{const c=available.categories.find(c=>c.id===item.categoryId);if(!c||c.state!=='available'||item.quantity>c.available)throw new AppError(409,'Tiket habis atau sedang dipesan pembeli lain. Pilih tiket yang tersedia.','STOCK_CHANGED');if(c.price!==item.price)throw new AppError(409,'Harga tiket berubah. Periksa ringkasan terbaru.','PRICE_CHANGED');total+=c.price*item.quantity;people+=c.people*item.quantity;return {...item,name:c.name,people:c.people};});
-  const used=await usedStock(db,event.id,now);const reservedPeople=event.categories.reduce((s,c)=>s+(used[c.id]||0)*c.people,0);
+  const reservedPeople=event.categories.reduce((s,c)=>s+(used[c.id]||0)*c.people,0);
   if(people>event.maxPeople)throw new AppError(400,`Maksimal ${event.maxPeople} orang per pesanan.`);
   if(people+reservedPeople>event.capacity)throw new AppError(409,'Kapasitas event tidak mencukupi.','STOCK_CHANGED');
   const pricing=priceBreakdown(total,event.taxPercent??10,event.servicePercent??3);total=pricing.total;
@@ -41,8 +42,7 @@ export async function createOrder(input:unknown,key:string,reserveOnly=false){
 export async function completeBuyer(orderId:string,input:unknown,access?:string,user?:User|null){
  const body=checkoutSchema.omit({eventId:true,items:true}).parse(input);
  return transaction(async db=>{
-  await authorizeOrder(orderId,access,user,db);
-  const order=(await db.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[orderId])).rows[0];
+  const order=await authorizeOrder(orderId,access,user,db,true);
   if(order.status!=='pending'||new Date(order.expires_at)<=new Date())throw new AppError(409,'Waktu reservasi habis. Silakan pilih tiket kembali.','HOLD_EXPIRED');
   if(order.buyer_completed){
    if(order.buyer_name!==body.buyerName||order.buyer_email!==body.buyerEmail||order.phone!==body.phone||order.buyer_gender!==body.gender||order.requested_payment_channel!==body.paymentChannel)throw new AppError(409,'Data pesanan sudah dikirim. Buka halaman pembayaran.');
@@ -55,10 +55,10 @@ export async function completeBuyer(orderId:string,input:unknown,access?:string,
   return {id:orderId};
  });
 }
-export async function authorizeOrder(orderId:string,access?:string,user?:User|null,db:Db=database()){
- const order=(await db.query('SELECT * FROM orders WHERE id=$1',[orderId])).rows[0];if(!order)throw new AppError(404,'Pesanan tidak ditemukan.');
- if(user?.verified&&user.email===order.buyer_email)return order;
- if(access){const grants=await db.query("SELECT order_id FROM order_access WHERE order_id=$1 AND token_hash=$2 AND expires_at>now() AND kind='session'",[orderId,hash(access)]);if(grants.rows.length)return order;}
+export async function authorizeOrder(orderId:string,access?:string,user?:User|null,db:Db=database(),lock=false){
+ const order=(await db.query(`SELECT o.*,EXISTS(SELECT 1 FROM order_access a WHERE a.order_id=o.id AND a.token_hash=$2 AND a.expires_at>now() AND a.kind='session') AS has_access FROM orders o WHERE o.id=$1${lock?' FOR UPDATE OF o':''}`,[orderId,access?hash(access):null])).rows[0];
+ if(!order)throw new AppError(404,'Pesanan tidak ditemukan.');
+ if((user?.verified&&user.email===order.buyer_email)||order.has_access)return order;
  throw new AppError(403,'Buka pesanan melalui tautan aman di email atau masuk dengan akun terverifikasi.');
 }
 export async function exchangeAccess(raw:string){return transaction(async db=>{const r=await db.query("DELETE FROM order_access WHERE token_hash=$1 AND kind='link' AND expires_at>now() RETURNING order_id",[hash(raw)]);if(!r.rows[0])throw new AppError(400,'Tautan telah digunakan atau kedaluwarsa. Minta tautan baru.');return {id:r.rows[0].order_id,access:await accessGrant(db,r.rows[0].order_id)};});}
@@ -72,11 +72,31 @@ export async function expireOrders(){
   }
  });
 }
-export async function createPayment(orderId:string,access?:string,user?:User|null){return transaction(async db=>{await authorizeOrder(orderId,access,user,db);const order=(await db.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[orderId])).rows[0];if(!order.buyer_completed||order.status!=='pending'||new Date(order.expires_at)<=new Date())throw new AppError(409,'Pesanan tidak dapat dibayar.');const payment=await paymentAdapter().createPayment(orderId);await db.query('UPDATE orders SET payment_ref=$1 WHERE id=$2',[payment.reference,orderId]);return payment;});}
-export const ticketToken=(ticketId:string)=>sign('ticket:'+ticketId);
-export async function settlePayment(payment:PaymentEvent){
+async function paymentForOrder(db:Db,order:Record<string,any>){
+ if(order.payment_ref&&['paid','payment_review'].includes(order.status))return {reference:order.payment_ref as string,url:appUrl()+'/orders/'+order.id};
+ if(!order.buyer_completed||order.status!=='pending'||new Date(order.expires_at)<=new Date())throw new AppError(409,'Pesanan tidak dapat dibayar.');
+ if(order.payment_ref)return {reference:order.payment_ref as string,url:appUrl()+'/orders/'+order.id};
+ const payment=await paymentAdapter().createPayment(order.id);
+ await db.query('UPDATE orders SET payment_ref=$1 WHERE id=$2',[payment.reference,order.id]);return payment;
+}
+export async function createPayment(orderId:string,access?:string,user?:User|null){
+ return transaction(async db=>paymentForOrder(db,await authorizeOrder(orderId,access,user,db,true)));
+}
+// Retries lock the same order and return its terminal state. No second payment or ticket set.
+export async function simulatePayment(orderId:string,status:'paid'|'failed',access?:string,user?:User|null){
  return transaction(async db=>{
-  const order=(await db.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[payment.orderId])).rows[0];
+  const order=await authorizeOrder(orderId,access,user,db,true);
+  if(['paid','payment_review','failed'].includes(order.status))return {status:order.status as string};
+  const payment=await paymentForOrder(db,order);
+  const payload={id:'sim-'+orderId+'-'+status,orderId,reference:payment.reference,merchant:'tinitix-simulation' as const,amount:order.total,currency:'IDR' as const,status};
+  const raw=JSON.stringify(payload);
+  return settleInTransaction(db,paymentAdapter().verifyWebhook(raw,sign('webhook:'+raw)),{...order,payment_ref:payment.reference});
+ });
+}
+export const ticketToken=(ticketId:string)=>sign('ticket:'+ticketId);
+export async function settlePayment(payment:PaymentEvent){return transaction(db=>settleInTransaction(db,payment));}
+async function settleInTransaction(db:Db,payment:PaymentEvent,lockedOrder?:Record<string,any>){
+  const order=lockedOrder||(await db.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE',[payment.orderId])).rows[0];
   if(!order||order.total!==payment.amount||payment.currency!=='IDR'||order.payment_ref!==payment.reference||payment.merchant!=='tinitix-simulation')throw new AppError(400,'Data pembayaran tidak sesuai.');
   const seen=(await db.query('SELECT id FROM payment_events WHERE id=$1',[payment.id])).rows[0];if(seen)return {status:order.status};
   await db.query('INSERT INTO payment_events(id,order_id,data) VALUES($1,$2,$3)',[payment.id,order.id,JSON.stringify(payment)]);
@@ -94,7 +114,6 @@ export async function settlePayment(payment:PaymentEvent){
   for(const item of items)for(let n=0;n<item.quantity*item.people;n++){const ticketId=id('ticket');await db.query('INSERT INTO tickets(id,order_id,order_item_id,event_id,name,category_name,token_hash,ordinal) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[ticketId,order.id,item.id,event.id,order.buyer_name,item.name,hash(ticketToken(ticketId)),n]);}
   const link=await accessGrant(db,order.id,'link');await enqueueMail(db,order.buyer_email,orderEmail(order.buyer_name,order.id,link,event.name),order.id);await audit(db,'payment','paid',order.id);
   return {status:'paid'};
- });
 }
 export async function getOrder(orderId:string,access?:string,user?:User|null):Promise<OrderView>{
  await authorizeOrder(orderId,access,user);await expireOrders();const db=database(),order=(await db.query('SELECT * FROM orders WHERE id=$1',[orderId])).rows[0];

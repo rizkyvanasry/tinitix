@@ -274,3 +274,61 @@ it('event discovery category and tags persist independently of ticket types',asy
  assert.deepEqual((await getEvent(saved.id)).tags,[]);
  await assert.rejects(saveEvent({...event,eventCategory:'Unknown'},admin));
 });
+
+it('live dashboard uses one tenant-scoped statement and rejects unverified users before SQL',async()=>{
+ const {eoLive}=await import('../lib/eo-live');let queries=0;
+ const tracked:Db={query:async(sql,values)=>{queries++;return db.query(sql,values);}};
+ setTestDatabase({...tracked,transaction:async()=>{throw new Error('Live reads must use a single statement snapshot');}});
+ try{
+  await assert.rejects(eoLive({...admin,verified:false},event.id),/Akses/);assert.equal(queries,0);
+  const result=await eoLive(admin,event.id);assert.equal(queries,1);assert.equal(result.paidOrders,0);
+  await assert.rejects(eoLive({...admin,organizationId:'different'},event.id),/tidak ditemukan/);assert.equal(queries,2);
+ }finally{setTestDatabase({...db,transaction:fn=>pg.transaction(tx=>fn({query:async(sql,values)=>(await tx.query(sql,values)) as any}))});}
+});
+
+it('concurrent reservation, buyer and payment retries issue one order and one ticket set',async()=>{
+ const {completeBuyer,simulatePayment}=await import('../lib/orders');
+ const request=purchase(),requestKey=key();
+ const reservations=await Promise.all(Array.from({length:8},()=>createOrder(request,requestKey,true)));
+ assert.equal(new Set(reservations.map(r=>r.id)).size,1);
+ const order=reservations[0];
+ await Promise.all(Array.from({length:5},()=>completeBuyer(order.id,request,order.access)));
+ const paid=await Promise.all(Array.from({length:8},()=>simulatePayment(order.id,'paid',order.access)));
+ assert.ok(paid.every(r=>r.status==='paid'));
+ const references=await Promise.all(Array.from({length:4},()=>createPayment(order.id,order.access)));
+ assert.equal(new Set(references.map(r=>r.reference)).size,1);
+ assert.equal((await db.query('SELECT count(*)::int n FROM orders')).rows[0].n,1);
+ assert.equal((await db.query('SELECT count(*)::int n FROM tickets')).rows[0].n,1);
+ assert.equal((await db.query('SELECT count(*)::int n FROM payment_events')).rows[0].n,1);
+ await assert.rejects(simulatePayment(order.id,'paid','incorrect-access'),/tautan aman/);
+ assert.equal((await simulatePayment(order.id,'failed',order.access)).status,'paid');
+});
+
+it('concurrent checkout contention preserves capacity and live snapshot invariants',async()=>{
+ const {eoLive}=await import('../lib/eo-live');const {simulatePayment}=await import('../lib/orders');
+ event=await saveEvent({...event,capacity:3,categories:event.categories.map((c,i)=>({...c,quota:i===0?3:0}))},admin);
+ const results=await Promise.allSettled(Array.from({length:12},()=>createOrder(purchase(),key())));
+ const orders=results.filter((r):r is PromiseFulfilledResult<{id:string;access:string}>=>r.status==='fulfilled').map(r=>r.value);
+ assert.equal(orders.length,3);
+ await Promise.all([...orders.map(o=>simulatePayment(o.id,'paid',o.access)),...(Array.from({length:5},async()=>{
+  const live=await eoLive(admin,event.id);
+  assert.equal(live.paidUnits,live.paidOrders);
+  assert.equal(live.availablePeople,live.capacity-live.paidPeople-live.pendingPeople);
+  assert.equal(live.revenue.gross,live.revenue.subtotal+live.revenue.tax+live.revenue.service);
+  assert.equal(live.daily.reduce((n,r)=>n+r.gross,0)+live.undatedRevenue,live.revenue.gross);
+ }))]);
+ const final=await eoLive(admin,event.id);assert.equal(final.paidOrders,3);assert.equal(final.availablePeople,0);assert.equal(final.pendingPeople,0);
+ assert.equal((await db.query('SELECT count(*)::int n FROM tickets')).rows[0].n,3);
+});
+
+it('live unique buyers normalize email and use latest gender; missing payment dates stay undated',async()=>{
+ const {eoLive}=await import('../lib/eo-live');
+ const a=await createOrder(purchase(),key());await pay(a);
+ const b=await createOrder({...purchase(),gender:'male'},key());await pay(b);
+ await db.query("UPDATE orders SET buyer_email=' DINA@EXAMPLE.TEST ',created_at=now()-interval '1 day' WHERE id=$1",[a.id]);
+ await db.query('DELETE FROM payment_events WHERE order_id=$1',[a.id]);
+ const live=await eoLive(admin,event.id);
+ assert.deepEqual(live.buyers,{total:1,male:1,female:0,unknown:0});
+ assert.equal(live.undatedRevenue,(await db.query('SELECT total FROM orders WHERE id=$1',[a.id])).rows[0].total);
+ assert.equal(live.daily.reduce((n,r)=>n+r.gross,0)+live.undatedRevenue,live.revenue.gross);
+});

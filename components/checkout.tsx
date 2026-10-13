@@ -12,10 +12,15 @@ export function Checkout({initialEvent,enabled,step='tickets',initialQuantities=
  const buyerStep=step==='buyer';
  const [event,setEvent]=useState(initialEvent),[quantities,setQuantities]=useState<Record<string,number>>(initialQuantities),[form,setForm]=useState({buyerName:'',buyerEmail:'',phone:'',gender:'',paymentChannel:'',accepted:false}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[review,setReview]=useState(false),[touched,setTouched]=useState<Record<string,boolean>>({});
  const router=useRouter(),key=useRef('');
+ const attempt=useRef<{key:string;items:{categoryId:string;quantity:number;price:number}[]}|null>(null);
+ const [recovering,setRecovering]=useState(false);
+ const attemptStorage='tinitix-pending-reservation:'+initialEvent.id;
  const [hold,setHold]=useState<OrderView|null>(null),[serverTime,setServerTime]=useState(0),[holdLoading,setHoldLoading]=useState(buyerStep&&Boolean(orderId));
  const [resumeId,setResumeId]=useState('');
  useEffect(()=>{
   if(buyerStep)return;let active=true;
+  try{const raw=sessionStorage.getItem(attemptStorage);if(raw){const saved=JSON.parse(raw);if(typeof saved.key==='string'&&Array.isArray(saved.items)&&saved.items.length){attempt.current=saved;key.current=saved.key;setQuantities(Object.fromEntries(saved.items.map((i:{categoryId:string;quantity:number})=>[i.categoryId,i.quantity])));setRecovering(true);setError('Reservasi sebelumnya belum terkonfirmasi. Klik Checkout untuk melanjutkan permintaan yang sama.');}}}catch{}
+
   try{const saved=sessionStorage.getItem('tinitix-active-hold:'+initialEvent.id);if(saved)void api<OrderView>('orders/'+saved).then(o=>{if(active&&o.event.id===initialEvent.id&&!o.buyerCompleted&&o.status==='pending'&&Date.parse(o.expiresAt)>Date.parse(o.serverNow))setResumeId(o.id);}).catch(()=>{});}catch{}
   return()=>{active=false;};
  },[buyerStep,initialEvent.id]);
@@ -45,22 +50,29 @@ export function Checkout({initialEvent,enabled,step='tickets',initialQuantities=
  const ticketHref='/events/'+event.slug+'/tickets'+selectionQuery;
 
  useEffect(()=>{key.current='';},[quantities,form]);
- function change(id:string,delta:number){setQuantities(q=>({...q,[id]:Math.max(0,(q[id]||0)+delta)}));setError('');}
+ function change(id:string,delta:number){if(busy||attempt.current)return;setQuantities(q=>({...q,[id]:Math.max(0,(q[id]||0)+delta)}));setError('');}
  async function submit(e:React.FormEvent){
-  e.preventDefault();if(busy||!enabled||!(buyerStep?valid:validTickets))return;
+  e.preventDefault();if(busy||!enabled||!(buyerStep?valid:(recovering||validTickets)))return;
   setBusy(true);setError('');
   const storageKey='tinitix-hold:'+event.id+':'+JSON.stringify(quantities);
   try{
    if(!buyerStep){
     if(!key.current){try{key.current=sessionStorage.getItem(storageKey)||crypto.randomUUID();sessionStorage.setItem(storageKey,key.current);}catch{key.current=crypto.randomUUID();}}
-    const result=await api<{id:string}>('orders/reserve',{eventId:event.id,items:selected.map(c=>({categoryId:c.id,quantity:quantities[c.id],price:c.price}))},{'Idempotency-Key':key.current});
-    try{sessionStorage.setItem('tinitix-active-hold:'+event.id,result.id);}catch{}
+    const pending=attempt.current||{key:key.current,items:selected.map(c=>({categoryId:c.id,quantity:quantities[c.id],price:c.price}))};
+    // Persist before sending. If storage is unavailable, don't send an unrecoverable request.
+    try{sessionStorage.setItem(attemptStorage,JSON.stringify(pending));}catch{throw new Error('Penyimpanan sesi browser diperlukan agar pesanan dapat dipulihkan. Aktifkan penyimpanan lalu coba lagi.');}
+    attempt.current=pending;setRecovering(true);
+    const result=await api<{id:string}>('orders/reserve',{eventId:event.id,items:pending.items},{'Idempotency-Key':pending.key});
+    try{sessionStorage.setItem('tinitix-active-hold:'+event.id,result.id);sessionStorage.removeItem(attemptStorage);}catch{}
     router.push('/events/'+event.slug+'/buyer?order='+encodeURIComponent(result.id));
    }else{
     const result=await api<{id:string}>('orders/'+orderId+'/buyer',form);router.push('/orders/'+result.id);
    }
   }catch(e){
-   const err=e as Error&{code?:string};setError(err.message);
+   const err=e as Error&{code?:string;status?:number};setError(err.message);
+   if(!buyerStep&&[400,403,409].includes(err.status||0)){attempt.current=null;setRecovering(false);try{sessionStorage.removeItem(attemptStorage);}catch{}}
+   if(buyerStep&&orderId){try{const latest=await api<OrderView>('orders/'+orderId);if(latest.buyerCompleted){router.replace('/orders/'+orderId);return;}}catch{}}
+
    if(err.code==='HOLD_EXPIRED'){key.current='';try{sessionStorage.removeItem(storageKey);}catch{}if(buyerStep)setHold(h=>h?{...h,status:'expired'}:h);}
    if(!buyerStep&&(err.code==='STOCK_CHANGED'||err.code==='PRICE_CHANGED')){try{setEvent(await api<PublicEvent>('events/'+event.slug));setReview(true);key.current='';sessionStorage.removeItem(storageKey);}catch{}}
    setBusy(false);
@@ -79,5 +91,5 @@ export function Checkout({initialEvent,enabled,step='tickets',initialQuantities=
  <label className="field wide">Jenis kelamin<select required value={form.gender} onChange={e=>update('gender',e.target.value)}><option value="" disabled>Pilih jenis kelamin</option><option value="male">Laki-laki</option><option value="female">Perempuan</option></select></label>
  </div><h2>Kanal pembayaran</h2><p className="muted">Pilih metode untuk simulasi pembayaran. Tidak ada uang yang ditagihkan.</p><div className="payment-channel-options">{paymentChannels.map(c=><label className={'payment-channel-option '+(form.paymentChannel===c.value?'selected':'')} key={c.value}><input type="radio" name="paymentChannel" required value={c.value} checked={form.paymentChannel===c.value} onChange={()=>update('paymentChannel',c.value)}/><span>{c.label}<small>Simulasi</small></span></label>)}</div>
  {!validTickets&&<div className="notice">{holdLoading?'Memuat reservasi.':!hold?'Mulai dengan memilih tiket dan klik Checkout.':'Reservasi berakhir. Tiket yang belum dibayar tersedia kembali.'} <Link href={ticketHref}>Kembali pilih tiket</Link>.</div>}</section>}</div>
- <aside><div className="order-summary"><h2>Ringkasan pesanan</h2><div className="summary-event"><img src={event.poster} alt="" width="82" height="74"/><div><h3>{event.name}</h3><p>{dateLabel(event.starts,event.timezone)}</p><small>{[event.venue,event.city].filter(Boolean).join(', ')}</small></div></div><div className="summary-items">{selected.length?selected.map(c=><div key={c.id}><span>{c.name}<small>{quantities[c.id]} {c.people===2?'paket':'tiket'} × {rupiah(c.price)}</small></span><strong>{rupiah(c.price*quantities[c.id])}</strong></div>):<p className="muted">Belum ada tiket dipilih.</p>}</div><div className="summary-people"><Ticket size={17}/>{people} orang · {selected.reduce((s,c)=>s+quantities[c.id],0)} unit pembelian</div><div className="cost-row"><span>Subtotal tiket</span><span>{rupiah(pricing.subtotal)}</span></div><div className="cost-row"><span>Pajak ({pricing.taxPercent}%)</span><span>{rupiah(pricing.taxAmount)}</span></div><div className="cost-row"><span>Biaya layanan ({pricing.servicePercent}%)</span><span>{rupiah(pricing.serviceAmount)}</span></div><div className="summary-total" aria-live="polite"><span>Total pembayaran</span><strong>{rupiah(pricing.total)}</strong></div>{form.buyerEmail&&<div className="email-confirm"><Mail size={16}/><span>Tiket dikirim ke<br/><strong>{form.buyerEmail}</strong></span></div>}{buyerStep&&<label className="checkbox-field"><input type="checkbox" required checked={form.accepted} onChange={e=>update('accepted',e.target.checked)}/><span>Saya telah memeriksa email dan menyetujui <Link href={'/events/'+event.slug} target="_blank">syarat event</Link> serta <Link href="/privacy" target="_blank">kebijakan privasi</Link>.</span></label>}{error&&<div className="error-message" role="alert">{error}</div>}{review&&<div className="notice compact"><span>Ringkasan telah diperbarui. Periksa harga dan jumlah tiket.</span><button type="button" className="text-button" onClick={()=>{setReview(false);setError('');}}>Sudah saya periksa <Check size={16}/></button></div>}<button className="button full" type="submit" disabled={busy||review||!enabled||(buyerStep?!valid:!validTickets)}>{busy?'Memproses...':buyerStep?'Lanjut ke pembayaran':'Checkout'} <ArrowRight size={18}/></button><p className="secure-note"><ShieldCheck size={16}/> {buyerStep?'Selesaikan data dan pembayaran sebelum timer habis.':'Stok ditahan 15 menit setelah klik Checkout.'}</p></div></aside></form></div>;
+ <aside><div className="order-summary"><h2>Ringkasan pesanan</h2><div className="summary-event"><img src={event.poster} alt="" width="82" height="74"/><div><h3>{event.name}</h3><p>{dateLabel(event.starts,event.timezone)}</p><small>{[event.venue,event.city].filter(Boolean).join(', ')}</small></div></div><div className="summary-items">{selected.length?selected.map(c=><div key={c.id}><span>{c.name}<small>{quantities[c.id]} {c.people===2?'paket':'tiket'} × {rupiah(c.price)}</small></span><strong>{rupiah(c.price*quantities[c.id])}</strong></div>):<p className="muted">Belum ada tiket dipilih.</p>}</div><div className="summary-people"><Ticket size={17}/>{people} orang · {selected.reduce((s,c)=>s+quantities[c.id],0)} unit pembelian</div><div className="cost-row"><span>Subtotal tiket</span><span>{rupiah(pricing.subtotal)}</span></div><div className="cost-row"><span>Pajak ({pricing.taxPercent}%)</span><span>{rupiah(pricing.taxAmount)}</span></div><div className="cost-row"><span>Biaya layanan ({pricing.servicePercent}%)</span><span>{rupiah(pricing.serviceAmount)}</span></div><div className="summary-total" aria-live="polite"><span>Total pembayaran</span><strong>{rupiah(pricing.total)}</strong></div>{form.buyerEmail&&<div className="email-confirm"><Mail size={16}/><span>Tiket dikirim ke<br/><strong>{form.buyerEmail}</strong></span></div>}{buyerStep&&<label className="checkbox-field"><input type="checkbox" required checked={form.accepted} onChange={e=>update('accepted',e.target.checked)}/><span>Saya telah memeriksa email dan menyetujui <Link href={'/events/'+event.slug} target="_blank">syarat event</Link> serta <Link href="/privacy" target="_blank">kebijakan privasi</Link>.</span></label>}{error&&<div className="error-message" role="alert">{error}</div>}{review&&<div className="notice compact"><span>Ringkasan telah diperbarui. Periksa harga dan jumlah tiket.</span><button type="button" className="text-button" onClick={()=>{setReview(false);setError('');}}>Sudah saya periksa <Check size={16}/></button></div>}<button className="button full" type="submit" disabled={busy||review||!enabled||(buyerStep?!valid:!(recovering||validTickets))}>{busy?'Memproses...':buyerStep?'Lanjut ke pembayaran':'Checkout'} <ArrowRight size={18}/></button><p className="secure-note"><ShieldCheck size={16}/> {buyerStep?'Selesaikan data dan pembayaran sebelum timer habis.':'Stok ditahan 15 menit setelah klik Checkout.'}</p></div></aside></form></div>;
 }

@@ -8,7 +8,7 @@ Thresholds: dashboard p95 <= 1 second; each checkout request p95 <= 2 seconds; c
 
 ## Run
 
-Use a dedicated PostgreSQL test database. The harness creates a random `load_<uuid>` schema, applies migrations, seeds fixtures, starts a local production Next server, and removes only that schema on normal completion/error. It never accepts an external load-test URL. Email delivery and cloud uploads are disabled; payments are simulated. No customer accounts are used.
+Use a dedicated local PostgreSQL test database. This branch rejects non-loopback TEST_DATABASE_URL hosts to prevent accidental staging writes. The harness creates a random `load_<uuid>` schema, applies migrations, seeds fixtures, starts a local production Next server, and removes only that schema on normal completion/error. It never accepts an external load-test URL. Email delivery and cloud uploads are disabled; payments are simulated. No customer accounts are used.
 
 ```powershell
 npm run build
@@ -16,12 +16,12 @@ npm run build
 npm run test:load
 ```
 
-Optional `LOAD_PORT` defaults to 3200. The port must be unused. Exit code 2 means the performance target failed; other nonzero exits mean harness/setup failure. Output: `test-results/load/results.json` (ignored by git). Do not run multiple harnesses concurrently. A force-killed process may require removal of its exact generated schema after confirming ownership; never delete schemas using a broad wildcard.
+Optional `LOAD_ONE_WAY_MS` adds TCP delay in each direction; use the same value for both builds and compare the measured RTT. `LOAD_LABEL` selects `test-results/load/<label>.json` (default `results`). `PERF_METRICS=1` is set by the runner and adds numeric request phase percentiles to the report. Optional `LOAD_PORT` defaults to 3200. The port must be unused. Exit code 2 means the performance target failed; other nonzero exits mean harness/setup failure. Output: `test-results/load/results.json` (ignored by git). Do not run multiple harnesses concurrently. A force-killed process may require removal of its exact generated schema after confirming ownership; never delete schemas using a broad wildcard.
 
 ## Method
 
 - Ramps: 1 dashboard / 1 buyer for 30s; 10 / 2 for 45s; 25 / 5 for 45s; 50 / 10 for 60s. Warmup excluded.
-- Polls are scheduled every 3 seconds, staggered across tabs. One in-flight poll per tab; missed opportunities are counted. This intentionally demands a stricter cadence than the UI, which waits 3 seconds **after** each response and pauses hidden tabs.
+- Polls are scheduled every 3 seconds, staggered across tabs. One in-flight poll per tab; missed opportunities are counted. This intentionally demands a stricter cadence than the UI, which uses jitter and adaptive backoff **after** each response and pauses hidden tabs.
 - Requests time out after 15 seconds. Status `0` denotes transport failure/timeout, not a server HTTP status. Timed-out transactions may still commit; reconciliation waits for five consecutive idle database observations, then compares the dashboard with PostgreSQL after each stage.
 - Buyers use distinct synthetic IP identities so rate limits continue to execute without modeling every buyer behind a single IP. Authentication uses seeded verified EO sessions. Login, email provider, real payment gateway, browser rendering, QR/order-page polling, and internet/CDN latency are outside this test.
 - Stop higher ramps if more than 20% of HTTP requests time out or return 5xx. Track attempted requests, errors, p50/p95/p99, missed polls, scheduling delay, and completed journeys. RPS uses the scheduled stage duration; tail requests can complete afterward.

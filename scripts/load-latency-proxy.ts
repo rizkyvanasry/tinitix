@@ -4,9 +4,10 @@ export async function latencyProxy(connectionString:string,oneWayMs:number){
  const source=new URL(connectionString);
  if(!['127.0.0.1','localhost','[::1]'].includes(source.hostname))throw new Error('Latency proxy only accepts loopback PostgreSQL');
  if(!Number.isFinite(oneWayMs)||oneWayMs<0||oneWayMs>100)throw new Error('Latency must be 0..100 ms per direction');
+ const targetPort=Number(source.port||5432),targetHost=source.hostname;
  const sockets=new Set<net.Socket>();
  const server=net.createServer(client=>{
-  const upstream=net.connect(Number(source.port||5432),source.hostname);
+  const upstream=net.connect(targetPort,targetHost);
   for(const socket of [client,upstream]){sockets.add(socket);socket.setNoDelay(true);socket.on('error',()=>{client.destroy();upstream.destroy();});socket.on('close',()=>sockets.delete(socket));}
   client.on('data',chunk=>setTimeout(()=>{if(!upstream.destroyed)upstream.write(chunk);},oneWayMs));
   upstream.on('data',chunk=>setTimeout(()=>{if(!client.destroyed)client.write(chunk);},oneWayMs));
