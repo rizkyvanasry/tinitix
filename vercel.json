@@ -1,1 +1,14 @@
-{"framework":"nextjs","crons":[{"path":"/api/cron/maintenance","schedule":"0 0 * * *"}]}
+{
+    "framework":  "nextjs",
+    "crons":  [
+                  {
+                      "path":  "/api/cron/maintenance",
+                      "schedule":  "0 0 * * *"
+                  }
+              ],
+    "git":  {
+                "deploymentEnabled":  {
+                                          "perf/backend-load-2026-10-13":  false
+                                      }
+            }
+}
